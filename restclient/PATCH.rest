@@ -1,0 +1,23 @@
+### Ein Labor mittels PATCH aktualisieren
+PATCH {{baseUrl}}/api/api/6e439d88-25f0-4faa-aabe-5fc3821c36df
+Content-Type: application/json
+Authorization: {{basic-auth}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/name", "value": "Neuername" },
+    { "op": "add", "path": "/laborTests", "value": "A" },
+    { "op": "remove", "path": "/laborTests", "value": "B" }
+]
+
+### Ein Labor mit fehlerhaften TestTypen mittels PATCH aktualisieren
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+Authorization: {{basic-auth}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/name", "value": "Neuername" },
+    { "op": "add", "path": "/laborTests", "value": "X" },
+    { "op": "remove", "path": "/laborTests", "value": "Y" }
+]

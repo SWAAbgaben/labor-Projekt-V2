@@ -1,0 +1,38 @@
+<!--
+   Copyright (C) 2018 - present Juergen Zimmermann, Hochschule Karlsruhe
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<head xmlns:th="http://www.thymeleaf.org"
+      th:fragment="header">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="J&uuml;rgen Zimmermann">
+  <meta name="keywords" content="Softwarearchitektur,REST,Spring,Thymeleaf,Bootstrap,Font Awesome">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'self' https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net; connect-src 'self' wss://localhost/; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; manifest-src 'self'"
+  />
+  <link href="/img/favicon.ico" rel="shortcut icon" type="image/x-icon">
+
+  <base href="/">
+
+  <title>Kunde</title>
+
+  <!--suppress JSUnresolvedLibraryURL -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css" type="text/css" integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
+  <link th:href="@{/css/styles.css}" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">
+</head>

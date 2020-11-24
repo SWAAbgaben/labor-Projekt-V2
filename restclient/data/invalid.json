@@ -1,0 +1,17 @@
+{
+  "name" : "Hahn",
+  "adresse" : {
+    "strasse" : "Straße",
+    "hausnummer" : "1",
+    "plz": "12345",
+    "ort": "Testort"
+  },
+  "telefonnummer" : "",
+  "fax" : "",
+  "laborTests" : [
+    "A",
+    "B"
+  ],
+  "testetAufCorona": "",
+  "zustaendigesGesundheitsamt" : ""
+}

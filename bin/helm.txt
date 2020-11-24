@@ -1,0 +1,7 @@
+gradle bootBuildImage
+
+helm install kunde .\helm-charts\microservice
+  ggf. --dry-run --debug
+helm uninstall kunde
+
+helmfile apply

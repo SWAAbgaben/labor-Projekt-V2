@@ -1,0 +1,116 @@
+# Copyright (C) 2016 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+server:
+  #port: 8080
+  compression:
+    enabled: true
+    mime-types: application/hal+json
+    min-response-size: 2KB
+  error.whitelabel.enabled: false
+  http2.enabled: true
+  ssl:
+    enabled: true
+    enabled-protocols: TLSv1.3,TLSv1.2
+    key-alias: microservice
+    key-password: zimmermann
+    key-store: classpath:keystore.p12
+    key-store-password: zimmermann
+    key-store-type: PKCS12
+    protocol: TLS
+    trust-store: classpath:truststore.p12
+    trust-store-password: zimmermann
+    trust-store-type: PKCS12
+  shutdown: graceful
+
+spring:
+  aop.proxy-target-class: false
+  application.name: labor
+  # Spring Data wird erst ab Beispiel 2 genutzt
+  data.mongodb.repositories.type: none
+  jackson.default-property-inclusion: non_null
+  lifecycle.timeout-per-shutdown-phase: 3s
+  main.lazy-initialization: true
+  # fuer Images mit GraalVM Native
+  native.remove-unused-autoconfig=true: true
+  output.ansi.enabled: ALWAYS
+  security.user.password: p
+  spel.ignore: true
+  thymeleaf.enabled: true
+
+management:
+  endpoints.web.exposure.include: "*"
+  endpoint:
+    health.enabled: true
+    health.probes.enabled: true
+    shutdown.enabled: true
+
+info.app:
+  author: Claudia Hahn
+  lecture: Softwarearchitektur
+  semester: 3
+  studiengang: Wirtschaftsinformatik und Microservices
+
+# https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-logging-file-output
+logging:
+  file.name: build/log/application.log
+  # z.B. TRACE beinhaltet auch DEBUG, INFO, WARN, ERROR, FATAL
+  level:
+    org:
+      hibernate.validator.internal.xml:
+        ValidationXmlParser: WARN
+        ValidationBootstrapParameters: WARN
+      springframework:
+        boot.devtools.autoconfigure.ConditionEvaluationDeltaLoggingListener: WARN
+        security.core:
+          userdetails.User: ERROR
+          #SpringSecurityCoreVersion: ERROR
+
+---
+spring:
+  config.activate.on-profile: dev
+  jackson.serialization.indent-output: true
+  reactor.debugagent.enabled: true
+  thymeleaf.cache: false
+  #devtools:
+  #  livereload.enabled: false
+  #  restart.trigger-file: /restart.txt
+  #http.log-request-details: true
+  # siehe org.springframework.boot.autoconfigure.jackson.JacksonProperties
+
+management:
+  endpoint:
+    env.enabled: true
+    health.show-details: ALWAYS
+    mappings.enabled: true
+  endpoints.web.cors:
+    allowed-origins: http://localhost,http://127.0.0.1,https://localhost,https://127.0.0.1
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: Origin,Content-Type,Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Expose-Headers,Allow,Content-Length,Date,If-None-Match,If-Match,Last-Modified,If-Modified-Since
+    exposed-headers: Location,ETag,Access-Control-Allow-Origin,Access-Control-Allow-Headers
+
+logging.level:
+  com.acme: TRACE
+  org:
+    junit.jupiter.engine.descriptor.TestInstanceLifecycleUtils: WARN
+    springframework:
+      http.codec.json.Jackson2JsonEncoder: DEBUG
+      web.server.adapter.HttpWebHandlerAdapter: DEBUG
+      boot.test.context.SpringBootTestContextBootstrapper: WARN
+      test.context.support:
+        AbstractContextLoader: WARN
+        AnnotationConfigContextLoaderUtils: WARN
+        DefaultTestContextBootstrapper: WARN
+  #reactor.netty.http.client: DEBUG

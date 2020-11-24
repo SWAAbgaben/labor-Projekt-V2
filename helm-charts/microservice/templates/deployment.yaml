@@ -1,0 +1,71 @@
+{{/*Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe*/}}
+
+{{/*This program is free software: you can redistribute it and/or modify*/}}
+{{/*it under the terms of the GNU General Public License as published by*/}}
+{{/*the Free Software Foundation, either version 3 of the License, or*/}}
+{{/*(at your option) any later version.*/}}
+
+{{/*This program is distributed in the hope that it will be useful,*/}}
+{{/*but WITHOUT ANY WARRANTY; without even the implied warranty of*/}}
+{{/*MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the*/}}
+{{/*GNU General Public License for more details.*/}}
+
+{{/*You should have received a copy of the GNU General Public License*/}}
+{{/*along with this program.  If not, see <http://www.gnu.org/licenses/>.*/}}
+
+{{/* Ein Pod wird durch ein Deployment (siehe "kind") gestartet und beinhaltet mind. 1 Image einschl. Replikationen */}}
+{{/* Ein Pod ist die Verwaltungseinheit fuer Container */}}
+{{/* AKMS = API, kind, metadata, spec */}}
+
+apiVersion: apps/v1
+{{/* https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#deployment-v1-apps */}}
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    version: {{ .Chart.Version }}
+    tier: appserver
+    platform : spring
+  namespace: {{ .Values.namespace }}
+spec:
+  {{/* https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#selector */}}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      version: {{ .Chart.Version }}
+  {{/* Anzahl laufender Pods fuer das template */}}
+  replicas: {{ .Values.replicaCount }}
+  {{/* https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates */}}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
+    {{/* Spezifikation des Pod */}}
+    spec:
+      containers:
+        {{/* https://kubernetes.io/docs/concepts/containers/images */}}
+        - image: {{ .Release.Name }}:{{ .Values.image.tag }}
+          imagePullPolicy: Never
+          name: {{ .Release.Name }}
+          {{/* https://kubernetes.io/docs/tasks/inject-data-application/define-interdependent-environment-variables */}}
+          {{/* https://opensource.com/article/19/6/introduction-kubernetes-secrets-and-configmaps */}}
+          envFrom:
+            {{/* https://kubernetes.io/docs/concepts/configuration/configmap */}}
+            - configMapRef:
+                name: {{ .Release.Name }}-env-dev
+          ports:
+            - containerPort: {{ .Values.deployment.containerPort }}
+          resources:
+            {{/* https://cloud.google.com/blog/products/gcp/kubernetes-best-practices-resource-requests-and-limits */}}
+            {{/* Begrenzung der Ressourcen:   kubectl top pod */}}
+            limits:
+              {{/* CPU-Ressourcen werden in "millicores", z.B. "500m" oder "1" */}}
+              cpu: "500m"
+              {{/* Memory-Resources werden i.a. als "mebibyte" Wert definiert */}}
+              memory: "512Mi"
+          securityContext:
+            runAsNonRoot: true
+            {{/* Spring setzt java.io.tmpdir auf den Defaultwert /tmp */}}
+            {{/* readOnlyRootFilesystem: true */}}

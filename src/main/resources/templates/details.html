@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<!--
+   Copyright (C) 2018 - present Juergen Zimmermann, Hochschule Karlsruhe
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="fragments/head"></head>
+
+  <body>
+    <div th:replace="fragments/nav"></div>
+
+    <main class="container">
+      <div class="card mt-2">
+        <div class="card-header">
+          <i class="material-icons">person</i>
+          <span class="ml-1 font-weight-bold">Kunde</span>
+        </div>
+
+        <div class="card-body">
+          <!-- /*@thymesVar id="kunde" type="com.acme.entity.Kunde"*/ -->
+          <!-- https://www.thymeleaf.org/doc/articles/springsecurity.html -->
+          <table class="table table-striped table-hover table-responsive" th:each="item : ${kunde}">
+            <tbody>
+              <tr>
+                <td>ID</td>
+                <td th:text="${item.id}"></td>
+              </tr>
+              <tr>
+                <td>Nachname</td>
+                <td th:text="${item.nachname}"></td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td th:text="${item.email}"></td>
+              </tr>
+              <tr>
+                <td>Kategorie</td>
+                <td th:text="${item.kategorie}"></td>
+              </tr>
+              <tr>
+                <td>Geburtsdatum</td>
+                <td th:text="${item.geburtsdatum}"></td>
+              </tr>
+              <tr>
+                <td>Homepage</td>
+                <td th:text="${item.homepage}"></td>
+              </tr>
+              <tr>
+                <td>Geschlecht</td>
+                <td th:text="${item.geschlecht}"></td>
+              </tr>
+              <tr>
+                <td>Newsletter</td>
+                <!-- TODO Wert von item.newsletter abfragen -->
+                <td><input type="checkbox" checked disabled class="checkbox" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <a xmlns:th="http://www.thymeleaf.org"
+         class="btn btn-primary mt-2"
+         th:href="@{/suche}">
+        <i class="material-icons">arrow_left</i>
+        <span class="ml-1">Zur&uuml;ck</span>
+      </a>
+    </main>
+    <div th:replace="fragments/scripts"></div>
+  </body>
+</html>

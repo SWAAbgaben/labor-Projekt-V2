@@ -1,0 +1,151 @@
+# Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Ein Pod wird durch ein Deployment (siehe "kind") gestartet und beinhaltet mind. 1 Image einschl. Replikationen
+# Ein Pod ist die Verwaltungseinheit fuer Container
+# AKMS = API, kind, metadata, spec
+
+# kubectl apply --filename labor.yaml
+# kubectl port-forward service/labor 8080 --namespace acme
+# curl --silent --user admin:p http://localhost:8080/api/00000000-0000-0000-0000-000000000001
+
+# Kommandozeile statt Octant https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands
+#   kubectl get deployments --namespace acme
+#   kubectl describe deployment kunde --namespace acme
+#   kubectl get pods --namespace acme
+#   kubectl get pods --selector app=kunde --namespace acme
+#   kubectl get pod kunde-?????????-????? --output wide --namespace acme
+#   kubectl get pod kunde-?????????-????? --output yaml --namespace acme
+#   kubectl describe pod kunde-?????????-????? --namespace acme
+#   kubectl exec kunde-?????????-????? --namespace acme -- printenv KUNDE_SERVICE_HOST
+#   kubectl exec kunde-?????????-????? --namespace acme -- printenv KUNDE_SERVICE_PORT
+#   kubectl exec kunde-?????????-????? --namespace acme -- printenv | sort
+#   kubectl exec kunde-?????????-????? --stdin --tty --namespace acme  -- bash
+#   kubectl get service kunde --namespace acme
+#   kubectl describe service kunde --namespace acme
+#   kubectl logs kunde-?????????-????? --namespace acme
+#   kubectl get replicaset --namespace acme
+
+# IP-Adresse des Pod ermitteln:
+#   $podName = kubectl get pods --selector app=kunde --namespace acme | wsl --exec awk '/^kunde-/ {print $1}'
+#   $ip = kubectl describe pod $podName --namespace acme | wsl --exec awk '/^IP:/ {print $2}'
+
+# https://kubernetes.io/docs/tasks/administer-cluster/namespaces-walkthrough
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acme
+  labels:
+    app: dev
+
+#---
+## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  name: default
+
+---
+# https://kubernetes.io/docs/concepts/configuration/configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: labor-env-dev
+  namespace: acme
+data:
+  # Key-Value-Paare(hier: fuer die Umgebungsvariable)
+  # Alternative: application.yml komplett bereitstellen
+  TZ: Europe/Berlin
+  SPRING_PROFILES_ACTIVE: dev
+  SERVER_SSL_ENABLED: "false"
+  SERVER_HTTP2_ENABLED: "false"
+  LOGGING_FILE_NAME: /tmp/application.log
+
+---
+# https://kubernetes.io/docs/concepts/services-networking/connect-applications-service
+# https://kubernetes.io/docs/concepts/services-networking/service
+apiVersion: v1
+kind: Service
+metadata:
+  name: labor
+  labels:
+    # "run" statt "app" wird seltener verwendet
+    app: labor
+  namespace: acme
+spec:
+  selector:
+    app: labor
+  ports:
+    - port: 8080
+      # https://kubernetes.io/docs/concepts/services-networking/service/#protocol-support
+      #protocol: TCP
+      # https://kubernetes.io/docs/concepts/services-networking/service/#nodeport
+      # default-Bereich: 30000 - 32767
+      #nodePort: 30080
+  # https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  #type: ClusterIP
+  #type: NodePort
+
+---
+apiVersion: apps/v1
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#deployment-v1-apps
+kind: Deployment
+metadata:
+  name: labor
+  labels:
+    version: v1
+    tier: appserver
+    platform : spring
+  namespace: acme
+spec:
+  # https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#selector
+  selector:
+    # gleicher Wert wie in template.metadata.labels
+    matchLabels:
+      app: labor
+      version: v1
+  # Anzahl laufender Pods fuer das template
+  replicas: 1
+  # https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates
+  template:
+    metadata:
+      labels:
+        app: labor
+        version: v1
+    # Spezifikation des Pod
+    spec:
+      containers:
+        # https://kubernetes.io/docs/concepts/containers/images
+        - image: labor:1.0
+          imagePullPolicy: Never
+          name: labor
+          # https://kubernetes.io/docs/tasks/inject-data-application/define-interdependent-environment-variables
+          # https://opensource.com/article/19/6/introduction-kubernetes-secrets-and-configmaps
+          envFrom:
+            # https://kubernetes.io/docs/concepts/configuration/configmap
+            - configMapRef:
+                name: labor-env-dev
+          ports:
+            - containerPort: 8080
+          resources:
+            # https://cloud.google.com/blog/products/gcp/kubernetes-best-practices-resource-requests-and-limits
+            # Begrenzung der Ressourcen:   kubectl top pod
+            limits:
+              # CPU-Ressourcen werden in "millicores", z.B. "500m" oder "1"
+              cpu: "500m"
+              # Memory-Resources werden i.a. als "mebibyte" Wert definiert
+              memory: "512Mi"
+          securityContext:
+            runAsNonRoot: true

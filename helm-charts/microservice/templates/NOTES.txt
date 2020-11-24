@@ -1,0 +1,26 @@
+Das Release {{ quote .Release.Name }} wurde mit dem Chart {{ quote .Chart.Name }} installiert.
+
+Nützliche Kommandos:
+
+  helm status {{ .Release.Name }} --namespace {{ .Values.namespace }}
+  helm get manifest {{ .Release.Name }} --namespace {{ .Values.namespace }}
+
+  $secret = kubectl get secret --namespace {{ .Values.namespace }}  | wsl --exec awk '/^sh\.helm\.release./ {print $1}'
+  $content = kubectl get secret $secret --output jsonpath='{.data.release}' --namespace {{ .Values.namespace }}
+  $decoded = [Convert]::FromBase64String($decoded)
+  [System.Text.Encoding]::UTF8.GetString($pwd)
+
+  kubectl describe configmap {{ .Release.Name }}-env-dev --namespace {{ .Values.namespace }}
+  kubectl get configmap {{ .Release.Name }}-env-dev --output jsonpath='{.data}' --namespace {{ .Values.namespace }}
+
+  curl ohne Port-Forwarding:
+    kubectl run multitool --image=praqma/network-multitool --stdin --tty --namespace {{ .Values.namespace }} -- bash
+      nslookup {{ .Release.Name }}
+      curl --silent --user admin:p http://{{ .Release.Name }}:{{ .Values.service.port }}/api/00000000-0000-0000-0000-000000000001
+      curl --silent --user admin:p http://{{ .Release.Name }}:{{ .Values.service.port }}/home
+    kubectl delete pod multitool --namespace {{ .Values.namespace }}
+
+  curl mit Port-Forwarding:
+    kubectl port-forward service/{{ .Release.Name }} {{ .Values.service.port }} --namespace {{ .Values.namespace }}
+      curl --silent --user admin:p http://localhost:{{ .Values.service.port }}/api/00000000-0000-0000-0000-000000000001
+      curl --silent --user admin:p http://localhost:{{ .Values.service.port }}/home

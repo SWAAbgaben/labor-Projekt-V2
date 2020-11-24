@@ -1,0 +1,24 @@
+# https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+max_line_length = 120
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 4
+# https://www.jetbrains.com/help/idea/configuring-code-style.html
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+ij_kotlin_name_count_to_use_star_import = 999
+ij_kotlin_name_count_to_use_star_import_for_members = 999
+
+[*.properties]
+ij_properties_align_group_field_declarations = true
+ij_properties_spaces_around_key_value_delimiter = true
+
+[*.{puml,ps1,xml}]
+indent_size = 4

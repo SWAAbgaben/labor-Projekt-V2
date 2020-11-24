@@ -1,0 +1,22 @@
+### Ein neues Labor anlegen
+POST {{baseUrl}}/api
+Content-Type: application/json
+ALPN: h2
+
+< data/labor-neu.json
+
+### Ein neues Labor mit fehlerhaften Daten anlegen
+POST {{baseUrl}}/api
+Content-Type: application/json
+ALPN: h2
+
+< data/invalid.json
+
+### Syntaktisch falscher JSON-Datensatz: ggf. ErrorWebFluxAutoConfiguration von Spring Boot ersetzen
+POST {{baseUrl}}/api
+Content-Type: application/json
+ALPN: h2
+
+< data/invalid-json.txt
+
+###
