@@ -1,0 +1,68 @@
+// Uebersicht
+GET {{baseUrl}}/actuator
+Authorization: {{basic-auth-admin}}
+
+###
+
+// Info
+GET {{baseUrl}}/actuator/info
+Authorization: {{basic-auth-admin}}
+
+###
+
+// Mappings
+GET {{baseUrl}}/actuator/mappings
+Authorization: {{basic-auth-admin}}
+
+###
+
+// Spring Beans
+GET {{baseUrl}}/actuator/beans
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+
+###
+
+// Umgebung und Properties
+GET {{baseUrl}}/actuator/env
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+
+###
+
+// "Health" der genutzten Services, wie z.B. MongoDB-Client oder Mail-Client
+GET {{baseUrl}}/actuator/health
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+
+###
+
+// Liveness
+GET {{baseUrl}}/actuator/health/liveness
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+
+###
+
+// Readiness
+GET {{baseUrl}}/actuator/health/readiness
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+
+###
+
+// Shutdown
+POST {{baseUrl}}/actuator/shutdown
+Authorization: {{basic-auth-admin}}
+Content-Type: application/json
+Host: {{host}}
+
+###
+
+// Info zum Start der Spring-Anwendung
+// https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#startup
+// curl 'https://localhost:8080/actuator/startup' --include --user admin:p --insecure --request POST
+POST {{baseUrl}}/actuator/startup
+Accept: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}

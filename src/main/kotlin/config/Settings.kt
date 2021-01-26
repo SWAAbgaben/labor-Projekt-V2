@@ -21,6 +21,7 @@ import org.springframework.boot.SpringBootVersion
 import org.springframework.core.SpringVersion
 import org.springframework.security.core.SpringSecurityCoreVersion
 import java.net.InetAddress
+import java.util.*
 
 /**
  * Singleton-Klasse, um sinnvolle Konfigurationswerte für den Microservice vorzugeben.
@@ -39,6 +40,7 @@ object Settings {
     val banner = Banner { _, _, out ->
         val jdkVersion = "${Runtime.version()} @ ${System.getProperty("java.version.date")}"
         val osVersion = System.getProperty("os.name")
+        val localhost = InetAddress.getLocalHost()
 
         // vgl. "Text Block" ab Java 15
         // https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
@@ -59,6 +61,8 @@ object Settings {
             |OpenJDK          $jdkVersion
             |Betriebssystem   $osVersion
             |Rechnername      ${InetAddress.getLocalHost().hostName}
+            |IP-Adresse       ${localhost.hostAddress}
+            |JVM Locale       ${Locale.getDefault()}
             |"""
                 .trimMargin("|"),
         )

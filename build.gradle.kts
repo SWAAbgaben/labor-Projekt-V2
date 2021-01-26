@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 /*
  * Copyright (C) 2016 - present Juergen Zimmermann, Hochschule Karlsruhe
  *
@@ -14,7 +12,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 //  Aufrufe
@@ -26,21 +24,21 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 //  2) Microservice als selbstausfuehrendes JAR erstellen und ausfuehren
 //        .\gradlew bootJar
 //        java -jar build/libs/....jar --spring.profiles.active=dev
+//        .\gradlew jibDockerBuild [-Dtag='2.0.0'] [-Ddebug=true]
 //        .\gradlew bootBuildImage
 //              erfordert die lokale Windows-Gruppe docker-users
 //              docker run --publish 8080:8080 --env TZ=Europe/Berlin --name kunde --rm kunde:1.0-GraalVM
 //              curl --silent http://localhost:8080
 //
-//        .\gradlew jibDockerBuild
-//
 //  3) Tests und QS
-//        .\gradlew test [--rerun-tasks] [--fail-fast]
+//        .\gradlew test [jacocoTestReport] [--rerun-tasks] [--fail-fast]
 //              EINMALIG>>   .\gradlew downloadAllure
 //        .\gradlew allureServe
 //        .\gradlew ktlint detekt
 //
-//  4) Sicherheitsueberpruefung durch OWASP Dependency Check
+//  4) Sicherheitsueberpruefung durch OWASP Dependency Check und Snyk
 //        .\gradlew dependencyCheckAnalyze --info
+//        .\gradlew snyk-test
 //
 //  5) "Dependencies Updates"
 //        .\gradlew versions
@@ -72,7 +70,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 //
 //  12) Initialisierung des Gradle Wrappers in der richtigen Version
 //      (dazu ist ggf. eine Internetverbindung erforderlich)
-//        gradle wrapper --gradle-version=6.7-rc-3 --distribution-type=all
+//        gradle wrapper --gradle-version=6.8 --distribution-type=all
 
 // https://github.com/gradle/kotlin-dsl/tree/master/samples
 // https://docs.gradle.org/current/userguide/kotlin_dsl.html
@@ -97,11 +95,14 @@ plugins {
 
     id("org.springframework.boot") version Versions.Plugins.springBoot
     id("com.adarshr.test-logger") version Versions.Plugins.testLogger
-
     // https://github.com/allure-framework/allure-gradle
     // https://docs.qameta.io/allure/#_gradle_2
     // https://github.com/allure-framework/allure-gradle/issues/52
     id("io.qameta.allure") version Versions.Plugins.allure
+    // https://github.com/chrisgahlert/gradle-dcompose-plugin
+    //id("com.chrisgahlert.gradle-dcompose-plugin") version Versions.Plugins.dcompose
+
+    id("com.fizzpod.sweeney") version Versions.Plugins.sweeney
 
     // https://github.com/arturbosch/detekt
     id("io.gitlab.arturbosch.detekt") version Versions.Plugins.detekt
@@ -110,22 +111,17 @@ plugins {
     // FIXME https://github.com/Kotlin/dokka/issues/1255
     id("org.jetbrains.dokka") version Versions.Plugins.dokka
 
-    // https://github.com/nwillc/vplugin
-    id("com.github.nwillc.vplugin") version Versions.Plugins.vplugin
-
-    // https://github.com/ben-manes/gradle-versions-plugin
-    id("com.github.ben-manes.versions") version Versions.Plugins.versions
-
     // https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin
-    // Alternative: https://buildpacks.io siehe https://spring.io/blog/2020/01/23/spring-boot-2-3-0-m1-is-now-available
     id("com.google.cloud.tools.jib") version Versions.Plugins.jib
-
-    id("com.fizzpod.sweeney") version Versions.Plugins.sweeney
 
     // https://github.com/jeremylong/dependency-check-gradle
     id("org.owasp.dependencycheck") version Versions.Plugins.owaspDependencyCheck
 
+    // https://github.com/snyk/gradle-plugin
+    id("io.snyk.gradle.plugin.snykplugin") version Versions.Plugins.snyk
+
     // https://github.com/asciidoctor/asciidoctor-gradle-plugin
+    // FIXME https://github.com/asciidoctor/asciidoctor-gradle-plugin/issues/583
     id("org.asciidoctor.jvm.convert") version Versions.Plugins.asciidoctorConvert
     id("org.asciidoctor.jvm.pdf") version Versions.Plugins.asciidoctorPdf
     // Leanpub als Alternative zu PDF: https://github.com/asciidoctor/asciidoctor-leanpub-converter
@@ -133,8 +129,11 @@ plugins {
     // https://github.com/dddjava/jig
     id("org.dddjava.jig-gradle-plugin") version Versions.Plugins.jig
 
-    // https://github.com/intergamma/gradle-zap
-    //id("net.intergamma.gradle.gradle-zap-plugin") version Versions.Plugins.zap
+    // https://github.com/nwillc/vplugin
+    id("com.github.nwillc.vplugin") version Versions.Plugins.vplugin
+
+    // https://github.com/ben-manes/gradle-versions-plugin
+    id("com.github.ben-manes.versions") version Versions.Plugins.versions
 
     // https://github.com/jk1/Gradle-License-Report
     // FIXME https://github.com/jk1/Gradle-License-Report/issues/176
@@ -146,11 +145,14 @@ plugins {
 
     // https://github.com/hierynomus/license-gradle-plugin
     //id("com.github.hierynomus.license") version Versions.Plugins.hierynomusLicense
+
+    // https://github.com/intergamma/gradle-zap
+    //id("net.intergamma.gradle.gradle-zap-plugin") version Versions.Plugins.zap
 }
 
 defaultTasks = mutableListOf("compileTestKotlin")
 group = "com.acme"
-version = "1.0"
+version = "1.0.0"
 
 // https://docs.spring.io/spring-boot/docs/current/gradle-plugin/reference/html/#build-image-example-builder-configuration
 // https://github.com/paketo-buildpacks/bellsoft-liberica#configuration
@@ -159,6 +161,8 @@ java.sourceCompatibility = Versions.javaSourceCompatibility
 
 repositories {
     mavenCentral()
+    jcenter()
+
     maven("https://dl.bintray.com/kotlin/kotlin-eap")
     //maven("https://dl.bintray.com/kotlin/kotlin-dev") {
     //    mavenContent { snapshotsOnly() }
@@ -171,8 +175,6 @@ repositories {
     maven("https://repo.spring.io/release") {
         mavenContent { releasesOnly() }
     }
-
-    jcenter()
 
     // Snapshots von Spring Framework, Spring Boot, Spring Data und Spring Security
     //maven("https://repo.spring.io/snapshot") {
@@ -191,14 +193,16 @@ val ktlintCfg: Configuration by configurations.creating
 dependencies {
     // https://docs.gradle.org/current/userguide/managing_transitive_dependencies.html#sec:bom_import
     // https://github.com/JetBrains/kotlin/blob/master/libraries/tools/kotlin-bom/pom.xml
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:${Versions.kotlin}"))
+    //implementation(platform("org.jetbrains.kotlin:kotlin-bom:${Versions.kotlin}"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:${Versions.Plugins.kotlin}"))
     //implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:${Versions.kotlinCoroutines}"))
+    implementation(platform("org.apache.logging.log4j:log4j-bom:${Versions.log4j2}"))
     //implementation(platform("org.junit:junit-bom:${Versions.junitJupiterBom}"))
     //implementation(platform("io.projectreactor:reactor-bom:${Versions.reactorBom}"))
     implementation(platform("com.fasterxml.jackson:jackson-bom:${Versions.jackson}"))
     //implementation(platform("org.springframework:spring-framework-bom:${Versions.springBom}"))
-    //implementation(platform("org.springframework.data:spring-data-bom:${Versions.springDataBom}"))
-    //implementation(platform("org.springframework.security:spring-security-bom:${Versions.springSecurityBom}"))
+    implementation(platform("org.springframework.data:spring-data-bom:${Versions.springDataBom}"))
+    implementation(platform("org.springframework.security:spring-security-bom:${Versions.springSecurityBom}"))
     implementation(platform("org.springframework.boot:spring-boot-starter-parent:${Versions.springBoot}"))
 
     // https://github.com/spring-projects-experimental/spring-graalvm-native
@@ -210,19 +214,16 @@ dependencies {
 
     // kotlinx.reflect.lite unterstuetzt nur Namen von Parametern und deren Nullability
     implementation(kotlin("reflect"))
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-    implementation("io.github.microutils:kotlin-logging:${Versions.kotlinLogging}")
 
     // "Starters" enthalten sinnvolle Abhaengigkeiten, die man i.a. benoetigt
-    // Netty ist default bei Spring WebFlux
-    // Tomcat ist default bei Spring WebMVC
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-tomcat")
     implementation("org.springframework.boot:spring-boot-starter-json")
     implementation("org.springframework.hateoas:spring-hateoas")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-mail")
@@ -230,6 +231,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // Alternative: Valiktor https://github.com/valiktor/valiktor
+    implementation("am.ik.yavi:yavi:${Versions.yavi}")
+    // https://logging.apache.org/log4j/2.x/manual/layouts.html#enable-jansi
+    implementation("org.fusesource.jansi:jansi:${Versions.jansi}")
+    // https://docs.spring.io/spring-boot/docs/current/reference/html/howto.html#howto-configure-log4j-for-logging
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
 
     // https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-kotlin-configuration-properties
     // https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-configuration-metadata.html#configuration-metadata-annotation-processor
@@ -249,9 +256,19 @@ dependencies {
     //runtimeOnly("org.springframework.boot:spring-boot-devtools:${Versions.springBoot}")
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation("io.kotest:kotest-assertions-core:${Versions.kotest}")
     testImplementation("io.mockk:mockk:${Versions.mockk}")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.assertj", module = "assertj-core")
+        exclude(group = "org.hamcrest", module = "hamcrest")
+        exclude(group = "org.mockito", module = "mockito-core")
+        exclude(group = "org.mockito", module = "mockito-junit-jupiter")
+        exclude(group = "org.skyscreamer", module = "jsonassert")
+        exclude(group = "org.xmlunit", module = "xmlunit-core")
+    }
     testImplementation("org.springframework.security:spring-security-test")
+    //testImplementation("org.testcontainers:mongodb")
+    //testImplementation("org.testcontainers:junit-jupiter")
 
     ktlintCfg("com.pinterest:ktlint:${Versions.ktlint}")
 
@@ -261,52 +278,34 @@ dependencies {
     @Suppress("UnstableApiUsage")
     constraints {
         implementation("org.springframework.hateoas:spring-hateoas:${Versions.springHateoas}")
-        //implementation("org.springframework.data:spring-data-mongodb:${Versions.springDataMongoDB}")
         implementation("org.springframework.security:spring-security-rsa:${Versions.springSecurityRsa}")
 
         implementation("org.jetbrains:annotations:${Versions.annotations}")
         //implementation("org.reactivestreams:reactive-streams:${Versions.reactiveStreams}")
-        implementation("org.hibernate.validator:hibernate-validator:${Versions.hibernateValidator}")
-        //implementation("org.mongodb:mongodb-driver-core:${Versions.mongodb}")
-        //implementation("org.mongodb:mongodb-driver-reactivestreams:${Versions.mongoDriverReactivestreams}")
+        implementation("org.mongodb:mongodb-driver-core:${Versions.mongodb}")
+        implementation("org.mongodb:mongodb-driver-reactivestreams:${Versions.mongoDriverReactivestreams}")
+        implementation("io.netty:netty-codec-http:${Versions.nettyCodecHttp}")
         //implementation("org.apache.tomcat.embed:tomcat-embed-core:${Versions.tomcat}")
         //implementation("org.apache.tomcat.embed:tomcat-embed-el:${Versions.tomcat}")
         //implementation("org.thymeleaf:thymeleaf-spring5:${Versions.thymeleaf}")
-
-        //testImplementation("org.assertj:assertj-core:${Versions.assertj}")
 
         ktlintCfg("org.jetbrains:annotations:${Versions.annotations}")
         ktlintCfg("org.jetbrains.kotlin:kotlin-stdlib:${Versions.ktlintKotlin}")
         ktlintCfg("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.ktlintKotlin}")
         ktlintCfg("org.apache.httpcomponents:httpclient:${Versions.httpClientKtlint}")
     }
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 configurations.all {
-    exclude(group = "org.apache.tomcat.embed", module = "tomcat-embed-websocket")
-
-    exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
-    exclude(group = "junit", module = "junit")
-    exclude(group = "org.hamcrest", module = "hamcrest")
-    exclude(group = "org.mockito", module = "mockito-core")
-    exclude(group = "org.skyscreamer", module = "jsonassert")
-    exclude(group = "org.xmlunit", module = "xmlunit-core")
-
-    exclude(group = "com.pinterest.ktlint", module = "ktlint-test")
-    exclude(group = "org.apache.maven")
+    // https://docs.spring.io/spring-boot/docs/current/reference/html/howto.html#howto-configure-log4j-for-logging
+    // https://blog.frankel.ch/feedback-log4j2-hack-spring-boot
+    exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
 
     // aktuelle Snapshots laden
     //resolutionStrategy { cacheChangingModulesFor(0, "seconds") }
 }
 
-//kotlinDslPluginOptions {
-//}
-
 allOpen {
-    // FIXME Funktionale Bean Definition und @SpringBootApplication
-    //annotation("org.springframework.context.annotation.Configuration")
-
     annotation("org.springframework.stereotype.Component")
     annotation("org.springframework.stereotype.Service")
     annotation("org.springframework.boot.context.properties.ConfigurationProperties")
@@ -317,7 +316,7 @@ noArg {
 }
 
 sweeney {
-    enforce(mapOf("type" to "gradle", "expect" to "[6.7,6.8)"))
+    enforce(mapOf("type" to "gradle", "expect" to "[6.7,7)"))
     // https://devcenter.heroku.com/articles/java-support#specifying-a-java-version
     enforce(
         mapOf(
@@ -328,15 +327,24 @@ sweeney {
     validate()
 }
 
+// https://kotlinlang.org/docs/reference/whatsnew14.html#explicit-api-mode-for-library-authors
+//kotlin {
+//    explicitApi()
+//}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        languageVersion = Versions.kotlinLanguageVersion
+        apiVersion = Versions.kotlinApiVersion
         jvmTarget = Versions.kotlinJvmTarget
         verbose = true
         // https://docs.gradle.org/6.6/userguide/kotlin_dsl.html#sec:kotlin_compiler_arguments
-        freeCompilerArgs = listOfNotNull("-Xjsr305=strict")
+        // https://kotlinlang.org/docs/reference/whatsnew14.html#new-modes-for-generating-default-methods
+        //  "-Xjvm-default=all"
+        //  "-Xjvm-default=all-compatibility"
+        freeCompilerArgs = listOfNotNull("-Xjsr305=strict", "-Xstring-concat=indy-with-constants", "-Xinline-classes")
         // https://kotlinlang.org/docs/reference/whatsnew14.html#new-jvm-ir-backend
+        // IndexOutOfBoundsException beim Uebersetzen von Router.kt
         //useIR = true
 
         //allWarningsAsErrors = true
@@ -362,56 +370,106 @@ tasks.bootJar {
     doLast {
         println("")
         println("Aufruf der ausfuehrbaren JAR-Datei:")
-        println("java -D'javax.net.ssl.trustStore=./src/main/resources/truststore.p12' -D'javax.net.ssl.trustStorePassword=zimmermann' -jar build/libs/${archiveFileName.get()} --spring.profiles.active=dev")
+        println("java -D'java.util.logging.manager=org.apache.logging.log4j.jul.LogManager' -D'log4j.skipJansi=false' -D'LOG_PATH=./build/log' -D'javax.net.ssl.trustStore=./src/main/resources/truststore.p12' -D'javax.net.ssl.trustStorePassword=zimmermann' -jar build/libs/${archiveFileName.get()} --spring.profiles.active=dev")
         println("")
     }
 }
 
 tasks.bootBuildImage {
+    // "created 40 years ago" wegen Reproducability: https://medium.com/buildpacks/time-travel-with-pack-e0efd8bf05db
+
+    // default:
+    //imageName = "docker.io/${project.name}:${project.version}"
+    // "latest" statt Versionsnummer des Projekts:
+    //imageName = "docker.io/${project.name}"
+    val username = "juergenzimmermann"
+    val tag = System.getProperty("tag") ?: project.version
+    imageName = "docker.io/${username}/${project.name}:$tag"
+
+    // https://github.com/bell-sw/Liberica/releases
+    // default: ALWAYS
+    //pullPolicy = org.springframework.boot.buildpack.platform.build.PullPolicy.IF_NOT_PRESENT
+
+    // Native Image mit GraalVM:
+    // https://github.com/paketo-buildpacks/spring-boot-native-image
     // https://github.com/paketo-buildpacks/builder
     // https://paketo.io/docs/getting-started/where-do-buildpacks-factor-in
+    // https://repo.spring.io/milestone/org/springframework/experimental/spring-graalvm-native-docs/0.8.0/spring-graalvm-native-docs-0.8.0.zip!/reference/index.html#_graalvm_options
     // https://github.com/spring-projects-experimental/spring-graalvm-native/blob/master/spring-graalvm-native-samples/webmvc-kotlin/build.gradle.kts
-    // Image-Groesse: Default Builder ~ 150 MB, Tiny Builder ~ 75 MB
+    // Image-Groesse: Default Builder ~600 MB, Tiny Builder ~400 MB
     //builder = "paketobuildpacks/builder:tiny"
-
-    // Mit BP_JVM_VERSION kann man die Java-Version aus java.sourceCompatibility ueberschreiben
-//    environment = mapOf(
-//        // https://github.com/paketo-buildpacks/spring-boot-native-image
-//        "BP_BOOT_NATIVE_IMAGE" to "true",
-//        // https://repo.spring.io/milestone/org/springframework/experimental/spring-graalvm-native-docs/0.8.0/spring-graalvm-native-docs-0.8.0.zip!/reference/index.html#_graalvm_options
-//        "BP_BOOT_NATIVE_IMAGE_BUILD_ARGUMENTS" to """
-//                -Dspring.spel.ignore=true
-//                -H:+ReportExceptionStackTraces
-//            """.trimIndent()
-//              // evtl. -H:+TraceClassInitialization
-//              // evtl. --initialize-at-build-time fuer Netty
-//    )
+    //environment = mapOf(
+    //    "BP_BOOT_NATIVE_IMAGE" to "1",
+    //    "BP_BOOT_NATIVE_IMAGE_BUILD_ARGUMENTS" to """
+    //            -Dspring.spel.ignore=true
+    //            -H:+ReportExceptionStackTraces
+    //        """.trimIndent()
+    //          // evtl. -H:+TraceClassInitialization
+    //          // evtl. --initialize-at-build-time fuer Netty
+    //)
 }
 
 // https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin
+// https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#why-is-my-image-created-48-years-ago
 jib {
+    val debug = System.getProperty("debug") ?: false.toString()
+
     from {
-        // https://hub.docker.com/_/openjdk
-        // https://github.com/docker-library/docs/blob/master/openjdk/README.md
-        //image = "openjdk:${Versions.jibJava}"
-        image = "openjdk:${Versions.jibJava}-alpine"
+        // Cache fuer Images und Layers:   ${env:LOCALAPPDATA}\Local\Google\Jib\Cache
+
+        // Ein "distroless image" enthaelt keine Package Manager, Shells, usw., sondern nur in der Variante -debug
+        // d.h. ca. 200 MB statt ca. 450 MB
+        // https://console.cloud.google.com/gcr/images/distroless
+        image = "gcr.io/distroless/java-debian10:${Versions.jibJava}"
+        if (debug.toBoolean()) {
+            image += "-debug"
+        }
     }
     to {
-        image = project.name
+        val username = "juergenzimmermann"
+        val tag = System.getProperty("tag") ?: project.version
+        image = "docker.io/${username}/${project.name}:$tag"
+        if (debug.toBoolean()) {
+            image += "-debug"
+        }
     }
+    container {
+        // "nonroot", siehe /etc/passwd
+        user = "65532:65532"
+
+        // Default: com.google.cloud.tools.jib.api.buildplan.ImageFormat.Docker
+        //format = com.google.cloud.tools.jib.api.buildplan.ImageFormat.OCI
+
+        //creationTime = "USE_CURRENT_TIMESTAMP"
+
+        // https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#jvm-flags
+        jvmFlags = listOf(
+            "-Dspring.config.location=classpath:/application.yml",
+            "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager",
+            "-Dlog4j.skipJansi=false"
+        )
+    }
+
+    // https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#extended-usage Umgebungsvariable
+    // https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#system-properties
 }
 
 tasks.bootRun {
-    // default ab Java 15:   -XX:+ShowCodeDetailsInExceptionMessages
     systemProperties = mapOf(
-        "javax.net.ssl.trustStore" to "./src/main/resources/truststore.p12",
-        "javax.net.ssl.trustStorePassword" to "zimmermann"
+        "java.util.logging.manager" to "org.apache.logging.log4j.jul.LogManager",
+        "log4j.skipJansi" to "false"
     )
 
-    args("--spring.profiles.active=dev", "--spring.config.location=classpath:/application.yml")
+    // Umgebungsvariable, z.B. fuer Spring Properties oder fuer log4j2.yml
+    environment("LOG_PATH", "./build/log")
+    environment("APPLICATION_LOGLEVEL", "trace")
 
-    // Spring Property
-    environment("spring.data.mongodb.password", "p")
+    args(
+        "--spring.profiles.active=dev",
+        "--spring.output.ansi.enabled=ALWAYS",
+        "--spring.config.location=classpath:/application.yml",
+        "--spring.data.mongodb.password=p"
+    )
 
     // Hotspot Compiler fuer aggressivere Optimierung als der Client-Compiler, aber laengere Startzeit: -server"
     // Remote Debugger:   .\gradlew bootRun --debug-jvm -verbose:class -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005
@@ -434,6 +492,9 @@ tasks.test {
     //    includeTestsMatching(includeTests)
     //}
 
+    systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
+    systemProperty("log4j.skipJansi", false)
+    systemProperty("WEBAPP_CLASS_LOADER_BASE_LOGLEVEL", "error")
     systemProperty("javax.net.ssl.trustStore", "./src/main/resources/truststore.p12")
     systemProperty("javax.net.ssl.trustStorePassword", "zimmermann")
     systemProperty("junit.platform.output.capture.stdout", true)
@@ -442,16 +503,21 @@ tasks.test {
     //systemProperty("org.aspectj.tracing.enabled", false)
     //systemProperty("org.aspectj.tracing.messages", false)
 
+    // Umgebungsvariable, z.B. fuer Spring Properties oder fuer log4j2.yml
     environment("spring.data.mongodb.password", "p")
+    environment("LOG_PATH", "./build/log")
+    environment("APPLICATION_LOGLEVEL", "trace")
 
     // https://docs.gradle.org/current/userguide/java_testing.html#sec:debugging_java_tests
     // https://www.jetbrains.com/help/idea/run-debug-configuration-junit.html
     // https://docs.gradle.org/current/userguide/java_testing.html#sec:debugging_java_tests
     //debug = true
 
-    // damit nach den Tests immer ein HTML-Report von JaCoCo erstellt wird
-    // https://github.com/gradle/gradle/pull/12626
-    finalizedBy(tasks.jacocoTestReport)
+    doLast {
+        println("")
+        println("Kotlin in der Sprachversion 1.5: Beispiel 2 und \"gradle jacocoTestReport\" funktionieren nicht")
+        println("")
+    }
 }
 
 // https://docs.qameta.io/allure/#_gradle_2
@@ -460,6 +526,8 @@ allure {
     configuration = "testImplementation"
     version = Versions.allure
     useJUnit5 { version = Versions.allureJunit }
+    // FIXME https://github.com/allure-framework/allure-gradle/issues/48
+    aspectjVersion = Versions.aspectjweaver
     //downloadLink = "https://repo1.maven.org/maven2/io/qameta/allure/allure-commandline/${Versions.allureCommandline}/allure-commandline-${Versions.allureCommandline}.zip"
 }
 
@@ -577,22 +645,33 @@ dependencyCheck {
     format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.ALL
 }
 
+snyk {
+    setArguments("--all-sub-projects")
+    setSeverity("low")
+    setApi("40df2078-e1a3-4f28-b913-e2babbe427fd")
+    //setApi("12345678-1234-1234-1234-123456789012")
+}
+
 // SVG-Dateien von AsciidoctorPdf fuer Dokka umkopieren
 @Suppress("KDocMissingDocumentation")
 val copySvg by tasks.register<Copy>("copySvg") {
     from("$buildDir/docs/asciidocPdf")
     include("*.svg")
-    into("$buildDir/dokka/${project.name}/images")
+    into("$buildDir/dokka/html/images")
 
     dependsOn("asciidoctorPdf")
 }
 
+// https://github.com/Kotlin/dokka/blob/master/docs/src/doc/docs/user_guide/gradle/usage.md
 tasks.dokkaHtml {
+    // When this is set to default, caches are stored in $USER_HOME/.cache/dokka
+    cacheRoot.set(file("$buildDir/dokka/cache"))
     dokkaSourceSets {
         configureEach {
-            includes.from("Module.md")
+            // FIXME https://github.com/Kotlin/dokka/issues/1662
+            // includes.from("Module.md")
             apiVersion.set("1.4")
-            languageVersion.set(apiVersion)
+            //languageVersion.set(apiVersion)
             reportUndocumented.set(true)
             jdkVersion.set(Versions.kotlinJvmTarget.toInt())
             noStdlibLink.set(true)
@@ -606,7 +685,11 @@ tasks.dokkaHtml {
         }
     }
 
-    dependsOn(copySvg)
+    dependsOn("createDokkaCacheDirectory", copySvg)
+}
+
+tasks.register("createDokkaCacheDirectory") {
+    doLast { mkdir("$buildDir/dokka/cache") }
 }
 
 tasks.asciidoctor {
@@ -663,16 +746,12 @@ licenseReport {
     configurations = arrayOf("runtimeClasspath")
 }
 
+tasks.dependencyUpdates {
+    checkConstraints = true
+}
+
 idea {
     module {
         isDownloadJavadoc = true
     }
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
 }

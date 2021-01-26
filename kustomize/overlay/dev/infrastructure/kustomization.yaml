@@ -1,0 +1,43 @@
+# Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# #it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Aufruf:   cd kustomize\overlay\dev\infrastructure
+#             kubectl apply --kustomize .
+#             kubectl delete --kustomize .
+#             kubectl kustomize .
+#
+#             kustomize build --output resources.yaml
+#             kubectl apply --filename .\resources.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# FIXME https://kubernetes-sigs.github.io/kustomize/blog/2019/06/18/v2.1.0/#resources-expanded-bases-deprecated
+# https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#bases-and-overlays
+# https://github.com/kubernetes/kubectl/issues/891#issuecomment-731238572
+bases:
+  - ../../../base/infrastructure
+
+# Umgebungsvariable, Labels, Annotationen, Images, Tags usw. ueberschreiben
+# https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#customizing
+# https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md
+patchesStrategicMerge:
+  - mongodb/configmap.yaml
+  - mongodb/secret.yaml
+  - mailserver/configmap.yaml
+
+# https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#kustomize-feature-list
+commonLabels:
+  env: dev

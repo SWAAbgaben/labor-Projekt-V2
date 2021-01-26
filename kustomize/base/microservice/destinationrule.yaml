@@ -1,0 +1,48 @@
+# Copyright (C) 2021 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# https://istio.io/latest/docs/reference/config/networking/destination-rule
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: labor-rule
+  namespace: acme
+spec:
+  host: labor
+  # https://istio.io/latest/docs/reference/config/networking/destination-rule/#Subset
+  # Aufteilung der Endpoints (hier: anhand der Labels) von einem Service (hier: kunde)
+  subsets:
+    - labels:
+        version: v2
+      name: v2
+      # https://istio.io/latest/docs/reference/config/networking/destination-rule/#ConnectionPoolSettings
+      # Ueberlast vermeiden, wenn ein Pod nicht mehr funktioniert
+      trafficPolicy:
+        connectionPool:
+          tcp:
+            maxConnections: 10
+    - labels:
+        version: v1
+      name: v1
+      trafficPolicy:
+        connectionPool:
+          tcp:
+            maxConnections: 10
+  # https://istio.io/latest/docs/reference/config/networking/destination-rule/#TrafficPolicy
+  # Lastbalanzierung statt "weighted routes" im VirtualService
+  trafficPolicy:
+    loadBalancer:
+      # ROUND_ROBIN (= default), LEAST_CONN, RANDOM
+      simple: ROUND_ROBIN

@@ -12,12 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# https://github.com/detekt/detekt/blob/master/detekt-core/src/main/resources/default-detekt-config.yml
-
-build:
-  maxIssues: 1
-
+-
 comments:
   UndocumentedPublicFunction:
     active: true

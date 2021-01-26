@@ -1,0 +1,92 @@
+// Einen Kunden mittels PATCH aktualisieren
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000003
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuernameput" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.deput" },
+    { "op": "add", "path": "/interessen", "value": "S" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+###
+
+// Einen Kunden mittels PATCH und ungueltigen Daten aktualisieren
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000003
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+[
+  { "op": "replace", "path": "/email", "value": "emailungueltig@" }
+]
+
+###
+
+// Einen Kunden mittels PATCH und falschem Passwort aktualisieren: 401 (Unauthorized)
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin-falsch}}
+Host: {{host}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuername" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.de" },
+    { "op": "add", "path": "/interessen", "value": "R" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+###
+
+// Einen Kunden mittels PATCH und fehlenden Rechten aktualisieren: 403 (Forbidden)
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-alpha1}}
+Host: {{host}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuername" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.de" },
+    { "op": "add", "path": "/interessen", "value": "R" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+###
+
+// Zu einem vorhandenen Kunden ein PNG-Bild hochladen
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Content-Type: image/png
+Host: {{host}}
+
+< data/image.png
+
+###
+
+// Zu einem vorhandenen Kunden ein JPEG-Bild hochladen
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Content-Type: image/jpeg
+Host: {{host}}
+
+< data/image.jpg
+
+###
+
+// Zu einem vorhandenen Kunden ein MP4-Video hochladen
+PATCH {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Content-Type: video/mp4
+Host: {{host}}
+
+< data/video.mp4

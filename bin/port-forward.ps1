@@ -11,12 +11,11 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # https://docs.microsoft.com/en-us/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands?view=powershell-7
 
-# Aufruf:   .\port-forward.ps1
-# kubectl port-forward --namespace polaris svc/polaris-dashboard 8008:80
+# Aufruf:   .\port-forward.ps1 labor|bestellung|mongodb|mailserver
 
 # "Param" muss in der 1. Zeile sein
 Param (
@@ -25,7 +24,7 @@ Param (
 
 Set-StrictMode -Version Latest
 
-$versionMinimum = [Version]'7.1.0'
+$versionMinimum = [Version]'7.2.0'
 $versionCurrent = $PSVersionTable.PSVersion
 if ($versionMinimum -gt $versionCurrent) {
     throw "PowerShell $versionMinimum statt $versionCurrent erforderlich"
@@ -33,6 +32,18 @@ if ($versionMinimum -gt $versionCurrent) {
 
 # Titel setzen
 $script = $myInvocation.MyCommand.Name
-$host.ui.RawUI.WindowTitle = $script
+$host.ui.RawUI.WindowTitle = $service
 
-kubectl port-forward service/labor 8080 --namespace acme
+$namespace = 'acme'
+switch ($service) {
+    'labor' { kubectl port-forward service/$service 8080 --namespace $namespace; break }
+    'bestellung' { kubectl port-forward service/$service 8081:8080 --namespace $namespace; break }
+    'mongodb' { kubectl port-forward service/$service 27017 --namespace $namespace; break }
+    'mailserver' { kubectl port-forward service/$service 5025 5080 5081 --namespace $namespace; break }
+
+    default {
+        $script = $myInvocation.MyCommand.Name
+        $host.ui.RawUI.WindowTitle = $script
+        Write-Output "$script labor|bestellung|mongodb|mailserver"
+    }
+}

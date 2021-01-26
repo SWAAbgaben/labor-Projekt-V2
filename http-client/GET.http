@@ -1,0 +1,212 @@
+// Suche alle Labor
+GET {{baseUrl}}/api
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche alle Labore mit falschem Passwort: 401 (Unauthorized)
+GET {{baseUrl}}/api
+Authorization: {{basic-auth-admin-falsch}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche alle Labor mit fehlenden Rechten: 403 (Forbidden)
+GET {{baseUrl}}/api
+Authorization: {{basic-auth-alpha1}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandener Kunde-ID als admin
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit ungueltiger Kunde-ID
+GET {{baseUrl}}/api/YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit nicht-vorhandener Kunde-ID
+GET {{baseUrl}}/api/99999999-9999-9999-9999-999999999999
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit falschem Passwort: 401 (Unauthorized)
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Accept: application/hal+json
+Authorization: Basic {{basic-auth-admin-falsch}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandener Kunde-ID als kunde
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Accept: application/hal+json
+Authorization: {{basic-auth-alpha1}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit fehlender Berechtigung: 403 (Forbidden)
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000002
+Accept: application/hal+json
+Authorization: {{basic-auth-alpha1}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandener Kunde-ID und ETag
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Accept: application/hal+json
+If-None-Match: "0"
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandener Kunde-ID und falschem ETag
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Accept: application/hal+json
+If-None-Match: 0
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen
+GET {{baseUrl}}/api?nachname=i
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen
+GET {{baseUrl}}/api?nachname=alpha
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandener Email
+GET {{baseUrl}}/api?email=alpha%40acme.edu
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit nicht-vorhandener Email
+GET {{baseUrl}}/api?email=theo%40test.edu
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Ort
+GET {{baseUrl}}/api?nachname=a&ort=a
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen, Ort und PLZ
+GET {{baseUrl}}/api?nachname=a&ort=a&plz=1
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Geschlecht
+GET {{baseUrl}}/api?nachname=a&geschlecht=W
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Familienstand
+GET {{baseUrl}}/api?nachname=a&familienstand=VH
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Interessen
+GET {{baseUrl}}/api?nachname=a&interessen=L
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Interessen
+GET {{baseUrl}}/api?nachname=a&interessen=L,R
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche mit vorhandenem Nachnamen und Interessen
+GET {{baseUrl}}/api?nachname=a&interessen=L&interessen=R
+Accept: application/hal+json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Streaming mit allen Labor
+GET {{baseUrl}}/api
+Accept: text/event-stream
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Zu einem vorhandenen Labor ein Bild (binaer!!!) herunterladen
+GET {{baseUrl}}/api/00000000-0000-0000-0000-000000000001/file
+Authorization: {{basic-auth-admin}}
+Accept: image/*
+Host: {{host}}

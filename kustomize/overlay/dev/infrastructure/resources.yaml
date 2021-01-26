@@ -1,0 +1,205 @@
+apiVersion: v1
+data:
+  SPRING_JPA_OPEN-IN-VIEW: "true"
+  SPRING_LAZY-INITIALIZATION: "true"
+  SPRING_MAIN_BANNER-MODE: LOG
+  SPRING_OUTPUT_ANSI_ENABLED: ALWAYS
+  TZ: Europe/Berlin
+kind: ConfigMap
+metadata:
+  labels:
+    env: dev
+  name: mailserver-env
+  namespace: acme
+---
+apiVersion: v1
+data:
+  MONGO_INITDB_ROOT_USERNAME: admin
+  TZ: Europe/Berlin
+kind: ConfigMap
+metadata:
+  labels:
+    env: dev
+  name: mongodb-env
+  namespace: acme
+---
+apiVersion: v1
+data:
+  password: cA==
+kind: Secret
+metadata:
+  labels:
+    env: dev
+  name: mongodb
+  namespace: acme
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mailserver
+    env: dev
+  name: mailserver
+  namespace: acme
+spec:
+  ports:
+  - name: tcp-smtp
+    port: 5025
+  - name: http
+    port: 5080
+  - name: actuator
+    port: 5081
+  selector:
+    app: mailserver
+    env: dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mongodb
+    env: dev
+  name: mongodb
+  namespace: acme
+spec:
+  ports:
+  - port: 27017
+  selector:
+    app: mongodb
+    env: dev
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    env: dev
+    type: local
+  name: data-volume
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /run/desktop/mnt/host/c/Zimmermann/volumes/mongodb-standalone-4.4/db
+    type: DirectoryOrCreate
+  storageClassName: hostpath
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    env: dev
+    tier: backend
+  name: mailserver
+  namespace: acme
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailserver
+      env: dev
+  template:
+    metadata:
+      labels:
+        app: mailserver
+        env: dev
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: mailserver-env
+        image: gessnerfl/fake-smtp-server:1.6.1
+        name: mailserver
+        ports:
+        - containerPort: 5025
+        - containerPort: 5080
+       - containerPort: 5081
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    env: dev
+    tier: backend
+  name: mongodb
+  namespace: acme
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+      env: dev
+  serviceName: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        env: dev
+    spec:
+      containers:
+      - args:
+        - --auth
+        - --bind_ip_all
+        - --tlsMode=disabled
+        - --wiredTigerCacheSizeGB=0.3
+        env:
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb
+        envFrom:
+        - configMapRef:
+            name: mongodb-env
+        image: mongo:4.4.2
+        name: mongo
+        ports:
+        - containerPort: 27017
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /data/db
+          name: data-volume
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: data-volume-mongodb-0
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        env: dev
+        tier: backend
+      name: data-volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: hostpath
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  labels:
+    env: dev
+  name: acme-gateway
+  namespace: acme
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*'
+    port:
+      name: http
+      number: 80
+      protocol: HTTP

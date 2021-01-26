@@ -16,10 +16,6 @@
  */
 package com.acme.labor.entity
 
-import javax.validation.constraints.Min
-import javax.validation.constraints.NotEmpty
-import javax.validation.constraints.Pattern
-
 /**
  * Adressdaten für die Anwendungslogik und zum Abspeichern in der DB.
  *
@@ -32,14 +28,11 @@ import javax.validation.constraints.Pattern
  * @constructor Erzeugt ein Objekt mit Postleitzahl und Ort.
  */
 data class Adresse(
-    @get:NotEmpty(message = "{adresse.strasse.notEmpty}")
     val strasse: String,
-    @get:Min(value = 1, message = "{adresse.hausnummer.min}")
+
     val hausnummer: Int,
-    @get:NotEmpty(message = "{adresse.plz.notEmpty}")
-    @get:Pattern(regexp = "\\d{5}", message = "{adresse.plz}")
+
     val plz: String,
 
-    @get:NotEmpty(message = "{adresse.ort.notEmpty}")
     val ort: String,
 )

@@ -17,15 +17,26 @@
 package com.acme.labor.config
 
 import com.acme.labor.Router
+import com.acme.labor.config.db.CustomConversions
+import com.acme.labor.config.db.GenerateLaborId
+import com.acme.labor.config.db.WriteConcernResolver
+import com.acme.labor.config.security.AuthorizationConfig
 import com.acme.labor.config.security.CustomUserDetailsService
+import com.acme.labor.config.security.PasswordEncoder
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.mongodb.config.EnableReactiveMongoAuditing
 import org.springframework.hateoas.config.EnableHypermediaSupport
 import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType.HAL
 import org.springframework.hateoas.support.WebStack.WEBFLUX
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 
 @Configuration(proxyBeanMethods = false)
-// application/hal+json wird zum Default beim Content-Type
 @EnableHypermediaSupport(type = [HAL], stacks = [WEBFLUX])
 @EnableWebFluxSecurity
-class AppConfig : Router, CustomUserDetailsService
+// fuer @PreAuthorize und @Secured
+@EnableReactiveMethodSecurity
+@EnableReactiveMongoAuditing
+@EnableConfigurationProperties(MailProps::class, MailAddressProps::class)
+class AppConfig : Router, GenerateLaborId, CustomConversions, WriteConcernResolver, AuthorizationConfig, PasswordEncoder

@@ -1,0 +1,29 @@
+// Suche Name mit Praefix
+GET {{baseUrl}}/api/name/a
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Suche Emailadressen mit Praefix
+#GET {{baseUrl}}/api/email/al
+#Authorization: {{basic-auth-admin}}
+#Host: {{host}}
+#ALPN: h2
+
+###
+
+// Suche Version zu Labor-ID
+GET {{baseUrl}}/api/version/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Alle Rollen ermitteln
+GET {{baseUrl}}/api/auth/rollen
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2

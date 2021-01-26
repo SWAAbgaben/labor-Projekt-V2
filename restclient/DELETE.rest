@@ -1,4 +1,0 @@
-### Löschen mit vorhandener Kunde-ID
-DELETE {{baseUrl}}/api/00000000-0000-0000-0000-000000000004
-Authorization: {{basic-auth}}
-ALPN: h2

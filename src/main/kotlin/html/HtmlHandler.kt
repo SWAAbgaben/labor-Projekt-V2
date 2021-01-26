@@ -16,7 +16,9 @@
  */
 package com.acme.labor.html
 
+import com.acme.labor.service.FindByIdResult
 import com.acme.labor.service.LaborService
+import kotlinx.coroutines.reactive.awaitFirst
 import org.springframework.http.MediaType.TEXT_HTML
 import org.springframework.stereotype.Component
 import org.springframework.ui.ConcurrentModel
@@ -27,7 +29,7 @@ import org.thymeleaf.spring5.context.webflux.ReactiveDataDriverContextVariable
 import java.util.UUID
 
 /**
- * Eine Handler-Function wird von der Router-Function [com.acme.kunde.Router] aufgerufen, nimmt einen Request
+ * Eine Handler-Function wird von der Router-Function [com.acme.labor.Router] aufgerufen, nimmt einen Request
  * entgegen und erstellt den HTML-Response durch den Aufruf der Funktion `render`.
  * Die Daten werden an die (HTML-) _View_ durch ein (Concurrent-) _Model_ weitergegeben.
  *
@@ -53,13 +55,13 @@ class HtmlHandler(private val service: LaborService) {
      * @return Ein ServerResponse mit dem Statuscode 200 und der Resultatseite.
      */
     suspend fun find(@Suppress("UNUSED_PARAMETER") request: ServerRequest): ServerResponse {
-        val kunden = ConcurrentModel()
+        val labore = ConcurrentModel()
             .addAttribute(
-                "kunden",
+                "labore",
                 ReactiveDataDriverContextVariable(service.findAll(), 1)
             )
 
-        return ServerResponse.ok().contentType(TEXT_HTML).renderAndAwait("suche", kunden)
+        return ServerResponse.ok().contentType(TEXT_HTML).renderAndAwait("suche", labore)
     }
 
     /**
@@ -72,12 +74,19 @@ class HtmlHandler(private val service: LaborService) {
         val idStr = request.queryParams().getFirst("id")
         if (idStr != null) {
             val id = UUID.fromString(idStr)
-            val laborFromDb = service.findById(id)
-            if (laborFromDb != null) {
-                labor.addAttribute("labor", laborFromDb)
+            val username = getUsername(request)
+
+            val findByIdResult = service.findById(id, username)
+            if (findByIdResult is FindByIdResult.Success) {
+                labor.addAttribute("labor", findByIdResult.labor)
             }
         }
 
         return ServerResponse.ok().contentType(TEXT_HTML).renderAndAwait("details", labor)
+    }
+
+    private suspend fun getUsername(request: ServerRequest): String {
+        val principal = request.principal().awaitFirst()
+        return principal.name
     }
 }

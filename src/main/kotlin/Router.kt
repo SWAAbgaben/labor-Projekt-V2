@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 - present Juergen Zimmermann, Hochschule Karlsruhe
+ * Copyright (C) 2016 - present Juergen Zimmermann, Hochschule Karlsruhe
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,67 +16,125 @@
  */
 package com.acme.labor
 
+import com.acme.labor.config.security.AuthorizationHandler
+import com.acme.labor.entity.Labor
 import com.acme.labor.html.HtmlHandler
+import com.acme.labor.rest.LaborFileHandler
 import com.acme.labor.rest.LaborHandler
 import com.acme.labor.rest.LaborStreamHandler
+import com.acme.labor.rest.LaborValuesHandler
+import kotlinx.coroutines.FlowPreview
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.springframework.context.annotation.Bean
 import org.springframework.hateoas.MediaTypes.HAL_JSON
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.http.MediaType.IMAGE_GIF
+import org.springframework.http.MediaType.IMAGE_JPEG
+import org.springframework.http.MediaType.IMAGE_PNG
 import org.springframework.http.MediaType.TEXT_EVENT_STREAM
 import org.springframework.http.MediaType.TEXT_HTML
+import org.springframework.http.MediaType.TEXT_PLAIN
 import org.springframework.web.reactive.function.server.coRouter
 
+/**
+ * Security-Konfiguration.
+ *
+ * @author [Jürgen Zimmermann](mailto:Juergen.Zimmermann@HS-Karlsruhe.de)
+ */
+// https://github.com/spring-projects/spring-security/tree/master/samples
 interface Router {
     /**
-     * Bean-Function, um das Routing mit _Spring WebFlux_ funktional zu konfigurieren.
+     * Bean-Definition, um den Zugriffsschutz an der REST-Schnittstelle zu konfigurieren.
      *
-     * @param handler Objekt der Handler-Klasse [LaborHandler] zur Behandlung von Requests.
-     * @param streamHandler Objekt der Handler-Klasse [LaborStreamHandler] zur Behandlung von Requests mit Streaming.
-     * @return Die konfigurierte Router-Function.
+     * @param http Injiziertes Objekt von `ServerHttpSecurity` als Ausgangspunkt für die Konfiguration.
+     * @return Objekt von `SecurityWebFilterChain`
      */
     @Bean
-    @Suppress("SpringJavaInjectionPointsAutowiringInspection", "LongMethod")
+    @Suppress("LongMethod", "LongParameterList")
+    @FlowPreview
     fun router(
         handler: LaborHandler,
         streamHandler: LaborStreamHandler,
-        htmlHandler: HtmlHandler
+        fileHandler: LaborFileHandler,
+        valuesHandler: LaborValuesHandler,
+        authorizationHandler: AuthorizationHandler,
+        htmlHandler: HtmlHandler,
     ) = coRouter {
-        val laborIdPath = "$apiPath/$idPathVar"
+        val idPath = apiPath
 
         // https://github.com/spring-projects/spring-framework/blob/master/...
         //       ..spring-webflux/src/main/kotlin/org/springframework/web/...
         //       ...reactive/function/server/RouterFunctionDsl.kt
         accept(HAL_JSON).nest {
             GET(apiPath, handler::find)
-            GET(laborIdPath, handler::findById)
+            GET(idPath, handler::findById)
         }
 
         accept(TEXT_EVENT_STREAM).nest {
             GET(apiPath, streamHandler::findAll)
         }
 
+        accept(TEXT_PLAIN).nest {
+            // fuer "Software Engineering" und Android
+            GET("$namePath/{$prefixPathVar}", valuesHandler::findNameByPrefix)
+        }
+
         contentType(APPLICATION_JSON).nest {
             POST(apiPath, handler::create)
-            PUT(laborIdPath, handler::update)
-            PATCH(laborIdPath, handler::patch)
+            PUT(idPath, handler::update)
+            PATCH(idPath, handler::patch)
         }
 
-        DELETE(laborIdPath, handler::deleteById)
+        contentType(
+            IMAGE_PNG,
+            IMAGE_JPEG,
+            IMAGE_GIF,
+            // https://www.iana.org/assignments/media-types/media-types.xhtml
+            // .mp4: Multimedia-Anwendungen
+            MediaType("video", "mp4"),
+            // Video Streaming und Conferencing
+            MediaType("video", "MPV"),
+            // .ogv: Multimedia-Anwendungen einschl. Streaming und Conferencing
+            MediaType("video", "ogg"),
+            // .mov, von Applie
+            MediaType("video", "quicktime"),
+            // .avi, von Microsoft
+            MediaType("video", "x-msvideo"),
+            // .wmv, von Microsoft
+            MediaType("video", "x-ms-wmv"),
+        ).nest {
+            PATCH(idPath, fileHandler::upload)
+        }
+
+        accept(MediaType("image"), MediaType("video")).nest {
+            // .../file damit im Webbrowser JSON- und multimediale Daten heruntergeladen werden koennen
+            GET("$idPath$fileSubpath", fileHandler::download)
+        }
+
+        DELETE(idPath, handler::deleteById)
 
         accept(TEXT_HTML).nest {
-            GET("/home", htmlHandler::home)
-            GET("/suche", htmlHandler::find)
-            GET("/details", htmlHandler::details)
+            GET(homePath, htmlHandler::home)
+            GET(suchePath, htmlHandler::find)
+            GET(detailsPath, htmlHandler::details)
         }
-    }
 
-    /**
-     * Konstante für das Routing
-     */
+        authPath.nest {
+            GET("/rollen", authorizationHandler::findEigeneRollen)
+        }
+
+        // ggf. weitere Routen: z.B. HTML mit ThymeLeaf, Mustache, FreeMarker
+    }
+        .filter { request, next ->
+            val uriFn = { request.uri() }
+            logger.trace("Filter vor dem Aufruf eines Handlers: {}", uriFn)
+            next.handle(request)
+        }
     companion object {
         /**
-         * Basis-Pfad der REST-Schnittstelle.
-         * const: "compile time constant"
+         * Basispfad der REST-Schnittstelle.
          */
         const val apiPath = "/api"
 
@@ -84,5 +142,62 @@ interface Router {
          * Name der Pfadvariablen für IDs.
          */
         const val idPathVar = "id"
+
+        /**
+         * Pfad für Binärdateien
+         */
+        const val fileSubpath = "/file"
+
+        /**
+         * Pfad für die Homepage der HTML-Schnittstelle
+         */
+        const val homePath = "/home"
+
+        /**
+         * Pfad für die Suchseite der HTML-Schnittstelle
+         */
+        const val suchePath = "/suche"
+
+        /**
+         * Pfad für die Detailsseite der HTML-Schnittstelle
+         */
+        const val detailsPath = "/details"
+
+        /**
+         * Pfad für Authentifizierung und Autorisierung
+         */
+        const val authPath = "$apiPath/auth"
+
+        /**
+         * Pfad, um Nachnamen abzufragen
+         */
+        const val namePath = "$apiPath/name"
+
+        private const val HEX_PATTERN = "[\\dA-Fa-f]"
+
+        /**
+         * Muster für eine UUID.
+         */
+        const val ID_PATTERN = "$HEX_PATTERN{8}-$HEX_PATTERN{4}-$HEX_PATTERN{4}-$HEX_PATTERN{4}-$HEX_PATTERN{12}"
+
+        /**
+         * Pfad, um Emailadressen abzufragen
+         */
+        const val emailPath = "$apiPath/email"
+
+        /**
+         * Pfad, um Versionsnummern abzufragen
+         */
+        const val versionPath = "$apiPath/version"
+
+        /**
+         * Name der Pfadvariablen, wenn anhand eines Präfix gesucht wird.
+         */
+        const val prefixPathVar = "prefix"
+
+        /**
+         * Logger gemäß _log4j2_.
+         */
+        private val logger: Logger = LogManager.getLogger(Router::class.java)
     }
 }

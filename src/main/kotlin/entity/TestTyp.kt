@@ -17,6 +17,9 @@
 package com.acme.labor.entity
 
 import com.fasterxml.jackson.annotation.JsonValue
+import org.springframework.core.convert.converter.Converter
+import org.springframework.data.convert.ReadingConverter
+import org.springframework.data.convert.WritingConverter
 
 /**
  * @property value Repräsentiert den Testtypen.
@@ -27,6 +30,26 @@ enum class TestTyp(val value: String) {
     Blut("B"),
 
     DNS("D");
+
+    @ReadingConverter
+    class ReadConverter : Converter<String, TestTyp> {
+        /**
+         * Konvertierung eines Strings in einen TestTyp.
+         * @param value Der zu konvertierende String.
+         * @return Der passende TestTyp oder null.
+         */
+        override fun convert(value: String) = build(value)
+    }
+
+    @WritingConverter
+    class WriteConverter : Converter<TestTyp, String> {
+        /**
+         * Konvertierung eines TestTyp in einen String für JSON oder für MongoDB.
+         * @param geschlecht Zu konvertierender TestTyp
+         * @return Der passende String
+         */
+        override fun convert(geschlecht: TestTyp) = geschlecht.value
+    }
 
     @JsonValue
     override fun toString() = value

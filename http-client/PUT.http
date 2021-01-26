@@ -1,0 +1,56 @@
+// Einen Kunden mittels PUT aktualisieren
+PUT {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+< data/kunde-1-put.json
+
+###
+
+// Einen Kunden mittels PUT und ungueltigen Daten aktualisieren
+PUT {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+< data/kunde-1-put-invalid.json
+
+###
+
+// Einen Kunden mittels PUT ohne Versionsnummer aktualisieren
+PUT {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+< data/kunde-1-put.json
+
+###
+
+// Einen Kunden mittels PUT mit alter Versionsnummer aktualisieren
+PUT {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "-1"
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+< data/kunde-1-put.json
+
+###
+
+// Einen Kunden mittels PUT und falschem Passwort aktualisieren: 401 (Unauthorized)
+PUT {{baseUrl}}/api/00000000-0000-0000-0000-000000000001
+If-Match: "0"
+Content-Type: application/json
+Authorization: {{basic-auth-admin-falsch}}
+Host: {{host}}
+ALPN: h2
+
+< data/kunde-1-put.json

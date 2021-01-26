@@ -14,6 +14,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 releases:
+  - name: mailserver
+    namespace: acme
+    chart: helm-charts/mailserver
+
+  - name: mongodb
+    namespace: acme
+    chart: helm-charts/mongodb
+
   - name: labor
     chart: helm-charts/labor
     namespace: acme

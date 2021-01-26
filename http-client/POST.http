@@ -1,0 +1,17 @@
+// Ein neues Labor anlegen
+POST {{baseUrl}}/api
+Content-Type: application/json
+Host: {{host}}
+ALPN: h2
+
+< data/labor-neu.json
+
+###
+
+// Ein neues Labor mit ungueltigen Daten versuchen anzulegen
+POST {{baseUrl}}/api
+Content-Type: application/json
+Host: {{host}}
+ALPN: h2
+
+< data/invalid.json

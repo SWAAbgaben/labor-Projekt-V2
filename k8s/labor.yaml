@@ -69,8 +69,8 @@ data:
   # Alternative: application.yml komplett bereitstellen
   TZ: Europe/Berlin
   SPRING_PROFILES_ACTIVE: dev
-  SERVER_SSL_ENABLED: "false"
-  SERVER_HTTP2_ENABLED: "false"
+  #SERVER_SSL_ENABLED: "false"
+  #SERVER_HTTP2_ENABLED: "false"
   LOGGING_FILE_NAME: /tmp/application.log
 
 ---

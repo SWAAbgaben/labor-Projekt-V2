@@ -12,40 +12,124 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.acme.labor.config.security
 
-import com.acme.labor.config.security.Rolle.actuator
-import com.acme.labor.config.security.Rolle.admin
-import com.acme.labor.config.security.Rolle.kunde
-import org.springframework.context.annotation.Bean
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import com.acme.labor.config.dev.UsersPopulate
+import kotlinx.coroutines.reactive.awaitFirst
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
+import org.springframework.data.mongodb.core.ReactiveMongoOperations
+import org.springframework.data.mongodb.core.asType
+import org.springframework.data.mongodb.core.insert
+import org.springframework.data.mongodb.core.oneAndAwait
+import org.springframework.data.mongodb.core.query
+import org.springframework.data.mongodb.core.query.Criteria.where
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.stereotype.Service
+import reactor.core.publisher.Mono
+import java.util.UUID.randomUUID
 
-interface CustomUserDetailsService {
-    /**
-     * Bean, um Test-User anzulegen. Dazu gehören jeweils ein Benutzername, ein
-     * Passwort und diverse Rollen. Das wird in Beispiel 2 verbessert werden.
-     *
-     * @return Ein Objekt, mit dem diese Test-User verwaltet werden, z.B. für
-     * die künftige Suche.
-     */
-    @Bean
-    fun userDetailsService(): MapReactiveUserDetailsService {
-        val passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
-        val password = passwordEncoder.encode("p")
-
-        val admin = User.withUsername("admin")
-            .password(password)
-            .roles(admin, kunde, actuator)
-            .build()
-        val alpha = User.withUsername("alpha")
-            .password(password)
-            .roles(kunde)
-            .build()
-
-        return MapReactiveUserDetailsService(admin, alpha)
+/**
+ * Service-Klasse, um Benutzerkennungen zu suchen und neu anzulegen.
+ *
+ * @author [Jürgen Zimmermann](mailto:Juergen.Zimmermann@HS-Karlsruhe.de)
+ */
+@Service
+class CustomUserDetailsService(
+    private val mongo: ReactiveMongoOperations,
+    private val passwordEncoder: PasswordEncoder,
+    @Suppress("UNUSED_PARAMETER") usersPopulate: UsersPopulate,
+) : ReactiveUserDetailsService {
+    init {
+        logger.debug("CustomUserDetailsService wird erzeugt")
     }
+
+    /**
+     * Zu einem gegebenen Username wird der zugehörige User gesucht.
+     * @param username Username des gesuchten Users
+     * @return Der gesuchte User in einem Mono
+     */
+    override fun findByUsername(username: String?): Mono<UserDetails?> {
+        logger.debug("findByUsername: {}", username)
+        return mongo.query<CustomUser>()
+            // Username ist ein Attribut der Java-Klasse User und keine Kotlin-Property :-(
+            // NICHT CustomUser::username
+            .matching(where("username").isEqualTo(username?.toLowerCase()))
+            // als ein Objekt der Klasse Mono aus Project Reactor
+            .one()
+            .cast(UserDetails::class.java)
+            .doOnNext { logger.debug("findByUsername: {}", it) }
+    }
+
+    /**
+     * Einen neuen User anlegen
+     * * @param user Der neue User
+     * @return Ein Resultatobjekt mit entweder dem neu angelegte CustomUser einschließlich ID oder mit
+     *      einem Fehlerobjekt vom Typ [CustomUserCreated.UsernameExists].
+     */
+    @Suppress("LongMethod")
+    suspend fun create(user: CustomUser): CreateResult {
+        val userExists = mongo.query<CustomUser>()
+            .asType<UsernameProj>()
+            // Username ist ein Attribut der Java-Klasse User und keine Kotlin-Property :-(
+            .matching(where("username").isEqualTo(user.username))
+            .exists()
+            .awaitFirst()
+        if (userExists) {
+            return CreateResult.UsernameExists(user.username)
+        }
+
+        // Die Account-Informationen des Kunden transformieren: in Account-Informationen fuer die Security-Komponente
+        val password = passwordEncoder.encode(user.password)
+        val authorities = user.authorities
+            ?.map { grantedAuthority -> SimpleGrantedAuthority(grantedAuthority.authority) }
+            ?: emptyList()
+        val neuerUser = CustomUser(
+            id = randomUUID(),
+            username = user.username.toLowerCase(),
+            password = password,
+            authorities = authorities,
+        )
+        logger.trace("create: neuerUser = {}", neuerUser)
+
+        val userCreated = mongo.insert<CustomUser>().oneAndAwait(neuerUser)
+        return CreateResult.Success(userCreated)
+    }
+
+    private companion object {
+        val logger: Logger = LogManager.getLogger(CustomUserDetailsService::class.java)
+    }
+}
+
+/**
+ * Klasse für eine DB-Query mit der Projektion auf die Property "username".
+ *
+ * @author [Jürgen Zimmermann](mailto:Juergen.Zimmermann@HS-Karlsruhe.de)
+ *
+ * @constructor Eine Projektion mit dem Benutzernamen erstellen.
+ * @param username Der username, auf den projeziert wird
+ */
+data class UsernameProj(val username: String)
+
+/**
+ * Resultat-Typ für [CustomUserDetailsService.create]
+ */
+sealed class CreateResult {
+    /**
+     * Resultat-Typ, wenn ein neuer User erfolgreich angelegt wurde.
+     * @property user Der neu angelegte CustomUser
+     */
+    data class Success(val user: CustomUser) : CreateResult()
+
+    /**
+     * Resultat-Typ, wenn eine Benutzerkennung nicht angelegt wurde, weil der Benutzername bereits existiert.
+     * @property username Der bereits existierende Benutzername
+     */
+    data class UsernameExists(val username: String) : CreateResult()
 }

@@ -1,0 +1,26 @@
+{
+  "name" : "Hahn",
+  "adresse" : {
+    "strasse" : "Strasse",
+    "hausnummer" : "1",
+    "plz": "12345",
+    "ort": "Testort"
+  },
+  "telefonnummer" : "123456789",
+  "fax" : "123456789",
+  "laborTests" : [
+      "A",
+      "B"
+  ],
+  "testetAufCorona": "true",
+  "zustaendigesGesundheitsamt" : {
+    "bundesland" : "Bayern",
+    "landkreis" : "Regen",
+    "adresse" : {
+      "strasse" : "Strasse",
+      "hausnummer" : "1",
+      "plz": "12345",
+      "ort": "Testort"
+    }
+  }
+}

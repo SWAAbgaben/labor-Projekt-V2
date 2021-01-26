@@ -1,0 +1,58 @@
+# Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Externe Freigabe eines Service aus dem "Service Mesh"
+# https://istio.io/latest/docs/examples/microservices-istio/istio-ingress-gateway
+# https://istio:io/latest/docs/reference/config/networking/gateway
+# https://istio.io/latest/docs/reference/config/networking/virtual-service
+# https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: acme-gateway
+spec:
+  selector:
+    # Default-Gateway
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        # https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/#accessing-ingress-services-using-a-browser
+        - gateway.acme.com
+        # fuer Angular in "Software Engineering"
+        #- "*"
+      # Statuscode 301 (Redirect) fuer HTTP-Requests
+      #tls:
+      #  httpsRedirect: true
+
+    # https://istio.io/v1.0/docs/tasks/traffic-management/secure-ingress/#configure-a-tls-ingress-gateway
+    # https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#configure-a-tls-ingress-gateway-with-a-file-mount-based-approach
+    # https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-sni-passthrough
+    # https://istio.io/latest/docs/reference/config/networking/gateway
+    # https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        # HTTP innerhalb von Kubernetes
+        mode: SIMPLE
+        # gleicher Name wie das Secret im Namespace "istio-system"
+        credentialName: acme-credential
+      hosts:
+        - gateway.acme.com

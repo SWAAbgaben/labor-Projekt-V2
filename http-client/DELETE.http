@@ -1,0 +1,31 @@
+// Löschen mit vorhandener ID
+DELETE {{baseUrl}}/api/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Löschen mit nicht-vorhandener ID
+DELETE {{baseUrl}}/api/FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+Authorization: {{basic-auth-admin}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Löschen mit vorhandener ID und falschem Passwort: 401 (Unauthorized)
+DELETE {{baseUrl}}/api/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-admin-falsch}}
+Host: {{host}}
+ALPN: h2
+
+###
+
+// Löschen mit vorhandener ID und fehlenden Rechten: 403 (Forbidden)
+DELETE {{baseUrl}}/api/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-alpha1}}
+Host: {{host}}
+ALPN: h2
+
+###

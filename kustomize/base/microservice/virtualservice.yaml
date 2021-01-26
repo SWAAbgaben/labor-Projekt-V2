@@ -1,0 +1,71 @@
+# Copyright (C) 2020 - present Juergen Zimmermann, Hochschule Karlsruhe
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Service innerhalb vom "Service Mesh"
+# https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control
+# https://istio.io/latest/docs/tasks/traffic-management/request-routing
+apiVersion: networking.istio.io/v1beta1
+# https://istio.io/latest/docs/reference/config/networking/virtual-service/#VirtualService
+kind: VirtualService
+metadata:
+  name: acme-labor
+spec:
+  hosts:
+    - gateway.acme.com
+    # fuer Angular in "Software Engineering"
+    #- "*"
+  gateways:
+    - acme-gateway
+  http:
+    # https://istio.io/latest/docs/concepts/traffic-management
+    # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest
+    - match:
+        - uri:
+            prefix: /labore/
+      rewrite:
+        uri: /
+      # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute
+      route:
+        # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRouteDestination
+        - destination:
+            host: labor
+            # Name des Subsets (Aufteilung der Endpoints vom Service) in einer DestinationRule
+            subset: v2
+          # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRouteDestination
+          # prozentuale Aufteilung des Traffics, z.B. fuer Canary Releases, statt Lastbalanzierung in DestinationRule
+          weight: 75
+        - destination:
+            host: labor
+            subset: v1
+          weight: 25
+
+      # https://istio.io/latest/docs/tasks/traffic-management/request-timeouts
+      # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute
+      # max. Zeitdauer, um auf einen Response von einem Service zu warten
+      timeout: 10s
+
+      # https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry
+      # Wiederholungen im Fehlerfall
+      retries:
+        # Anzahl Wiederholungen
+        attempts: 1
+        perTryTimeout: 10s
+
+      # Fault-Injection: zu einem bestimmten Prozentsatz werden Fehler in den Cluster eingestreut,
+      # um zu testen, ob im Fehlerfall der Cluster sich gemaess der Konfiguration (timeout, retries) verhaelt
+      #fault:
+      #  delay:
+      #    percent: 100
+      #    fixedDelay: 7s
