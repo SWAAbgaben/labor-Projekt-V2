@@ -26,8 +26,6 @@ import com.acme.labor.entity.Adresse
 import com.acme.labor.entity.Gesundheitsamt
 import com.acme.labor.entity.Labor
 import com.acme.labor.entity.TestTyp
-import com.acme.labor.rest.patch.PatchOperation
-import com.acme.labor.service.LaborServiceTest
 import com.jayway.jsonpath.JsonPath
 import io.kotest.assertions.asClue
 import io.kotest.assertions.assertSoftly
@@ -43,7 +41,6 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldMatch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Nested
@@ -85,9 +82,6 @@ import org.springframework.web.reactive.function.client.awaitBodilessEntity
 import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.reactive.function.client.awaitEntity
 import org.springframework.web.reactive.function.client.awaitExchange
-import java.math.BigDecimal.ONE
-import java.net.URL
-import java.time.LocalDate
 import java.util.*
 
 // https://junit.org/junit5/docs/current/user-guide
@@ -154,8 +148,6 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     it.body shouldNotBe null
                     val name: String = JsonPath.read(it.body, "$.name")
                     name shouldNot beBlank()
-                    val email: String = JsonPath.read(it.body, "$.email")
-                    email shouldNot beBlank()
                     val selfLink = HalLinkDiscoverer().findLinkWithRel("self", it.body ?: "").get().href
                     selfLink shouldBe "$baseUrl/$id"
                 }
@@ -194,8 +186,6 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     it.body shouldNotBe null
                     val name: String = JsonPath.read(it.body, "$.name")
                     name shouldNot beBlank()
-                    val email: String = JsonPath.read(it.body, "$.email")
-                    email shouldNot beBlank()
                     val linkDiscoverer = HalLinkDiscoverer()
                     val selfLink = linkDiscoverer.findLinkWithRel("self", it.body ?: "").get().href
                     selfLink shouldEndWith "/$id"
@@ -221,7 +211,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
             fun `Suche mit nicht-vorhandener ID und Rolle labor`(id: String) = runBlocking {
                 // given
                 val clientLabor = WebClient.builder()
-                    .filter(basicAuthentication(USERNAME_KUNDE, PASSWORD))
+                    .filter(basicAuthentication(USERNAME_LABOR, PASSWORD))
                     .baseUrl(baseUrl)
                     .build()
 
@@ -286,15 +276,15 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
         @ParameterizedTest
         @ValueSource(strings = [NAME])
         @Order(2100)
-        fun `Suche mit vorhandenem Nachnamen`(name: String) = runBlocking {
+        fun `Suche mit vorhandenem Namen`(name: String) = runBlocking {
             // given
             val nameLower = name.toLowerCase()
 
             // when
-            val labornModel = client.get()
+            val laborModel = client.get()
                 .uri { builder ->
                     builder
-                        .path(KUNDE_PATH)
+                        .path(LABOR_PATH)
                         .queryParam(NAME_PARAM, nameLower)
                         .build()
                 }
@@ -303,7 +293,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
 
             // then
             assertSoftly {
-                val (laborList) = labornModel._embedded
+                val (laborList) = laborModel._embedded
                 laborList shouldNot beEmpty()
                 laborList.forEach { labor ->
                     labor.content?.name shouldBeEqualIgnoringCase nameLower
@@ -328,7 +318,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
             fun `Abspeichern eines neuen Laborn`(args: ArgumentsAccessor) = runBlocking {
                 // given
                 val adresse = Adresse(NEUE_STRASSE, NEUE_HAUSNUMMER, NEUE_PLZ, NEUER_ORT)
-                val neuerLabor = Labor(
+                val neuesLabor = Labor(
                     id = null,
                     version = 0,
                     name = args.get<String>(0),
@@ -340,9 +330,9 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     zustaendigesGesundheitsamt = Gesundheitsamt("test", "test", adresse),
                     username = args.get<String>(5),
                 )
-                neuerLabor.user = CustomUser(
+                neuesLabor.user = CustomUser(
                     id = null,
-                    username = args.get<String>(7),
+                    username = args.get<String>(5),
                     password = "p",
                     authorities = emptyList(),
                 )
@@ -350,7 +340,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                 // when
                 val response = client.post()
                     .contentType(APPLICATION_JSON)
-                    .bodyValue(neuerLabor)
+                    .bodyValue(neuesLabor)
                     .awaitExchange { response -> response.awaitBodilessEntity() }
 
                 // then
@@ -367,18 +357,18 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     .uri(ID_PATH, id)
                     .retrieve()
                     .awaitBody<EntityModel<Labor>>()
-                laborModel.content?.name shouldBe neuerLabor.name
+                laborModel.content?.name shouldBe neuesLabor.name
             }
 
             @ParameterizedTest
             @CsvSource(
-                "$NEUER_NAME, $NEUE_TELEFONNUMMER, $NEUE_FAX, $NEUE_PLZ, " +
+                "$NEUER_NAME, $NEUE_TELEFONNUMMER, $NEUE_FAX, $NEUE_STRASSE, $NEUE_HAUSNUMMER, $NEUE_PLZ, " +
                     "$NEUER_ORT, $NEUER_USERNAME",
             )
             @Order(5100)
-            fun `Abspeichern eines neuen Laborn mit ungueltigen Werten`(args: ArgumentsAccessor) = runBlocking<Unit> {
+            fun `Abspeichern eines neuen Labor mit ungueltigen Werten`(args: ArgumentsAccessor) = runBlocking<Unit> {
                 // given
-                val adresse = Adresse(NEUE_STRASSE, NEUE_HAUSNUMMER, NEUE_PLZ, NEUER_ORT)
+                val adresse = Adresse(args.get<String>(3), args.get<Int>(4), args.get<String>(5), args.get<String>(6))
                 val neuesLabor = Labor(
                     id = null,
                     version = 0,
@@ -389,7 +379,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     laborTests = listOf(TestTyp.Antikoerper),
                     testetAufCorona = true,
                     zustaendigesGesundheitsamt = Gesundheitsamt("test", "test", adresse),
-                    username = args.get<String>(5),
+                    username = args.get<String>(7),
                 )
                 val violationKeys = listOf(
                     "labor.fax.pattern",
@@ -515,7 +505,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     id = UUID.fromString(id),
                     fax = fax,
                 )
-                val violationKeys = listOf("labor.name.pattern", "labor.email.pattern", "labor.kategorie.max")
+                val violationKeys = listOf("labor.name.pattern", "labor.kategorie.max")
 
                 val etag = responseOrig.headers.eTag
                 etag shouldNotBe null
@@ -589,12 +579,12 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
     private companion object {
         const val SCHEMA = "https"
         const val HOST = "localhost"
-        const val KUNDE_PATH = "/"
+        const val LABOR_PATH = "/"
         const val ID_PATH = "/{id}"
         const val NAME_PARAM = "name"
 
         const val USERNAME_ADMIN = "admin"
-        const val USERNAME_KUNDE = "alpha1"
+        const val USERNAME_LABOR = "alpha123"
         const val PASSWORD = "p"
         const val PASSWORD_FALSCH = "Falsches Passwort!"
 
@@ -605,7 +595,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
         const val ID_UPDATE_PATCH = "00000000-0000-0000-0000-000000000003"
         const val ID_DELETE = "00000000-0000-0000-0000-000000000004"
 
-        const val NAME = "alpha"
+        const val NAME = "Chicken"
 
         const val NEUE_TELEFONNUMMER = "123456789"
         const val NEUE_FAX = "12345"

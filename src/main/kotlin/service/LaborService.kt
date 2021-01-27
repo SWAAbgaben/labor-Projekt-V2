@@ -36,7 +36,6 @@ import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.data.mongodb.core.ReactiveFluentMongoOperations
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.allAndAwait
-import org.springframework.data.mongodb.core.awaitExists
 import org.springframework.data.mongodb.core.awaitOneOrNull
 import org.springframework.data.mongodb.core.flow
 import org.springframework.data.mongodb.core.insert
@@ -203,7 +202,7 @@ class LaborService(
             id = null,
             username = user.username,
             password = user.password,
-            authorities = listOfNotNull(SimpleGrantedAuthority("ROLE_KUNDE")),
+            authorities = listOfNotNull(SimpleGrantedAuthority("ROLE_LABOR")),
         )
 
         val customUserCreated = withTimeout(timeoutShort) {
@@ -234,7 +233,7 @@ class LaborService(
      * @param labor Das Objekt mit den neuen Daten.
      * @param id ID des Laborn.
      * @param versionStr Versionsnummer.
-     * @return Der aktualisierte Labor oder null, falls es keinen Laborn mit der angegebenen ID gibt.
+     * @return Der aktualisierte Labor oder null, falls es keinen Laboren mit der angegebenen ID gibt.
      */
     @Suppress("KDocUnresolvedReference")
     suspend fun update(labor: Labor, id: UUID, versionStr: String): UpdateResult {
@@ -248,7 +247,7 @@ class LaborService(
         logger.trace("update: version={}, laborDb={}", versionStr, laborDb)
         val version = versionStr.toIntOrNull() ?: return UpdateResult.VersionInvalid(versionStr)
 
-        return UpdateResult.Success(labor);
+        return update(labor, laborDb, version)
     }
 
     private suspend fun update(labor: Labor, laborDb: Labor, version: Int): UpdateResult {
@@ -261,8 +260,8 @@ class LaborService(
         // Typecast: sonst gibt es bei remove Probleme mit "Type Inference" infolge von "Type Erasure"
         laborCache.remove(laborDb)
 
-        val neuerLabor = labor.copy(id = laborDb.id, version = version)
-        logger.trace("update: neuerLabor= {}", neuerLabor)
+        val neuesLabor = labor.copy(id = laborDb.id, version = version)
+        logger.trace("update: neuerLabor= {}", neuesLabor)
         // ggf. OptimisticLockingFailureException
 
         // FIXME Warum gibt es bei replaceWith() eine Exception?
@@ -274,7 +273,7 @@ class LaborService(
         @Suppress("SwallowedException")
         return withTimeout(timeoutShort) {
             try {
-                val laborUpdated = mongo.save(neuerLabor).awaitFirst()
+                val laborUpdated = mongo.save(neuesLabor).awaitFirst()
                 UpdateResult.Success(laborUpdated)
             } catch (e: OptimisticLockingFailureException) {
                 UpdateResult.VersionOutdated(version)

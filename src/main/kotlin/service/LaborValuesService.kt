@@ -20,9 +20,11 @@ import com.acme.labor.entity.Labor
 import kotlinx.coroutines.flow.map
 import org.springframework.data.mongodb.core.ReactiveFindOperation
 import org.springframework.data.mongodb.core.asType
+import org.springframework.data.mongodb.core.awaitOneOrNull
 import org.springframework.data.mongodb.core.distinct
 import org.springframework.data.mongodb.core.flow
 import org.springframework.data.mongodb.core.query
+import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 
@@ -46,10 +48,18 @@ class LaborValuesService(private val mongo: ReactiveFindOperation) {
         .flow()
         .map { it.name }
 
+    suspend fun findVersionById(id: String) = mongo
+        .query<Labor>()
+        .asType<VersionProj>()
+        .matching(Labor::id isEqualTo id)
+        .awaitOneOrNull()
+        ?.version
+}
     /**
      * Hilfsklasse für die Projektion, wenn bei der DB-Suche nur der Nachname benötigt wird
      * @param nachname Der Nachname, auf den projiziert wird
      */
-// bei "inline class": ClassCastException innerhalb von Spring Data
+    // bei "inline class": ClassCastException innerhalb von Spring Data
     data class NameProj(val name: String)
-}
+
+    data class VersionProj(val version: Int)

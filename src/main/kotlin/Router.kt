@@ -62,7 +62,8 @@ interface Router {
         authorizationHandler: AuthorizationHandler,
         htmlHandler: HtmlHandler,
     ) = coRouter {
-        val idPath = apiPath
+        val idPathPattern = "{$idPathVar:$ID_PATTERN}"
+        val idPath = "$apiPath/$idPathPattern"
 
         // https://github.com/spring-projects/spring-framework/blob/master/...
         //       ..spring-webflux/src/main/kotlin/org/springframework/web/...
@@ -79,6 +80,8 @@ interface Router {
         accept(TEXT_PLAIN).nest {
             // fuer "Software Engineering" und Android
             GET("$namePath/{$prefixPathVar}", valuesHandler::findNameByPrefix)
+            GET("$versionPath/$idPathPattern", valuesHandler::findVersionById)
+
         }
 
         contentType(APPLICATION_JSON).nest {

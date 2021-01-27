@@ -15,7 +15,7 @@
 
 # https://docs.microsoft.com/en-us/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands?view=powershell-7
 
-# Aufruf:   .\port-forward.ps1 labor|bestellung|mongodb|mailserver
+# Aufruf:   .\port-forward.ps1 labor|mongodb|mailserver
 
 # "Param" muss in der 1. Zeile sein
 Param (
@@ -37,13 +37,12 @@ $host.ui.RawUI.WindowTitle = $service
 $namespace = 'acme'
 switch ($service) {
     'labor' { kubectl port-forward service/$service 8080 --namespace $namespace; break }
-    'bestellung' { kubectl port-forward service/$service 8081:8080 --namespace $namespace; break }
     'mongodb' { kubectl port-forward service/$service 27017 --namespace $namespace; break }
     'mailserver' { kubectl port-forward service/$service 5025 5080 5081 --namespace $namespace; break }
 
     default {
         $script = $myInvocation.MyCommand.Name
         $host.ui.RawUI.WindowTitle = $script
-        Write-Output "$script labor|bestellung|mongodb|mailserver"
+        Write-Output "$script labor|mongodb|mailserver"
     }
 }

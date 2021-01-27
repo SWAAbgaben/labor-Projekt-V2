@@ -16,6 +16,7 @@
  */
 package com.acme.labor.rest
 
+import com.acme.labor.Router.Companion.idPathVar
 import com.acme.labor.Router.Companion.prefixPathVar
 import com.acme.labor.service.LaborValuesService
 import kotlinx.coroutines.flow.toList
@@ -49,6 +50,22 @@ class LaborValuesHandler(private val service: LaborValuesService) {
             notFound().buildAndAwait()
         } else {
             ok().bodyValueAndAwait(nachnamen)
+        }
+    }
+
+    /**
+     * Abfrage, welche Version es zu einer Labor-ID gibt.
+     * @param request Der eingehende Request mit der Labor-ID als Pfadvariable.
+     * @return Die Versionsnummer.
+     */
+    suspend fun findVersionById(request: ServerRequest): ServerResponse {
+        val id = request.pathVariable(idPathVar)
+        val version = service.findVersionById(id)
+
+        return if (version == null) {
+            notFound().buildAndAwait()
+        } else {
+            ok().bodyValueAndAwait(version.toString())
         }
     }
 }

@@ -22,5 +22,9 @@
       "plz": "12345",
       "ort": "Testort"
     }
+  },
+  "user": {
+    "username": "testPerson",
+    "password": "p"
   }
 }

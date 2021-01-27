@@ -33,7 +33,7 @@ object Rolle {
     /**
      * Die Rolle _LABOR_
      */
-    const val labor = "KUNDE"
+    const val labor = "LABOR"
 
     /**
      * Die Rolle _ACTUATOR_

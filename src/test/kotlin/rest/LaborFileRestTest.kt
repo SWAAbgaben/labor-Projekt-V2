@@ -68,34 +68,6 @@ class LaborFileRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWeb
     }
 
     @ParameterizedTest
-    @CsvSource("$ID_UPDATE_IMAGE, $IMAGE_FILE_PNG")
-    fun `Upload und Download eines Bildes als Binaerdatei`(id: String, imageFile: String) = runBlocking {
-        // given
-        val image = Paths.get("http-client", "data", imageFile)
-
-        @Suppress("BlockingMethodInNonBlockingContext")
-        val bytesUpload = readAllBytes(image)
-
-        // when
-        val statusCodeUpload = client.patch()
-            .uri(ID_PATH, id)
-            .header(CONTENT_TYPE, IMAGE_PNG.toString())
-            .bodyValue(bytesUpload)
-            .awaitExchange { response -> response.statusCode() }
-
-        // then
-        statusCodeUpload shouldBe NO_CONTENT
-
-        val statusCodeDownload = client.get()
-            .uri(FILE_PATH, id)
-            .accept(IMAGE_PNG)
-            .awaitExchange { response -> response.statusCode() }
-
-        statusCodeDownload shouldBe OK
-        // ggf. responseDownload.body(toDataBuffers())
-    }
-
-    @ParameterizedTest
     @CsvSource("$ID_UPDATE_IMAGE, $IMAGE_FILE_JPG")
     fun `Upload ohne MIME-Type `(id: String, imageFile: String) = runBlocking {
         // given

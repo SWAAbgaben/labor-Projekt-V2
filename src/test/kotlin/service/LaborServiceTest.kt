@@ -116,7 +116,8 @@ class LaborServiceTest {
     private var validator = LaborValidator(messageSource, adresseValidator)
     private var userDetailsService = mockk<CustomUserDetailsService>()
     private val mailer = mockk<Mailer>()
-    private val service = LaborService(validator, mongo, userDetailsService, mailer)
+    private val gesundheitsamtClient = mockk<GesundheitsamtClient>()
+    private val service = LaborService(validator, mongo, userDetailsService, mailer, gesundheitsamtClient)
 
     private var findOp = mockk<ReactiveFind<Labor>>()
     private var insertOp = mockk<ReactiveInsert<Labor>>()
@@ -250,10 +251,7 @@ class LaborServiceTest {
         fun `Suche mit vorhandener PLZ`(
             idStr: String,
             name: String,
-            email: String,
             plz: String,
-            hausnummer: Int,
-            strasse: String,
         ) = runBlockingTest {
             // given
             every { mongo.query<Labor>() } returns findOp
@@ -280,7 +278,6 @@ class LaborServiceTest {
         fun `Suche mit vorhandenem Namen und PLZ`(
             idStr: String,
             name: String,
-            email: String,
             plz: String,
         ) = runBlockingTest {
             // given
@@ -357,34 +354,17 @@ class LaborServiceTest {
                     }
                 }
             }
-
-            @ParameterizedTest
-            @CsvSource("$NAME, $PLZ")
-            @Order(5100)
-            fun `Neuer Labor ohne Benutzerdaten`(name: String, email: String, plz: String) = runBlockingTest {
-                // given
-                val laborMock = createLaborMock(null, name)
-
-                // when
-                val result = service.create(laborMock)
-
-                // then
-                result.shouldBeInstanceOf<CreateResult.InvalidAccount>()
-            }
-
         }
 
         @Nested
         inner class Aendern {
             @ParameterizedTest
-            @CsvSource("$ID_UPDATE, $NAME, $PLZ")
+            @CsvSource("$ID_UPDATE, $NAME")
             @Order(6000)
             @Disabled("Mocking des Cache in Spring Data MongoDB...")
             fun `Vorhandenen Laborn aktualisieren`(
                 idStr: String,
                 name: String,
-                email: String,
-                plz: String,
             ) = runBlockingTest {
                 // given
                 every { mongo.query<Labor>() } returns findOp
@@ -405,16 +385,14 @@ class LaborServiceTest {
             }
 
             @ParameterizedTest
-            @CsvSource("$ID_NICHT_VORHANDEN, $NAME, $PLZ, $VERSION")
+            @CsvSource("$ID_NICHT_VORHANDEN, $NAME, $VERSION")
             @Order(6100)
             fun `Nicht-existierenden Laborn aktualisieren`(args: ArgumentsAccessor) = runBlockingTest {
                 // given
                 val idStr = args.get<String>(0)
                 val id = UUID.fromString(idStr)
                 val name = args.get<String>(1)
-                val email = args.get<String>(2)
-                val plz = args.get<String>(3)
-                val version = args.get<String>(4)
+                val version = args.get<String>(2)
 
                 every { mongo.query<Labor>() } returns findOp
                 every { findOp.matching(Labor::id isEqualTo id) } returns findOp
@@ -430,7 +408,7 @@ class LaborServiceTest {
             }
 
             @ParameterizedTest
-            @CsvSource("$ID_UPDATE, $NAME, $PLZ, $VERSION_INVALID")
+            @CsvSource("$ID_UPDATE, $NAME, $VERSION_INVALID")
             @Order(6200)
             fun `Labor aktualisieren mit falscher Versionsnummer`(args: ArgumentsAccessor) = runBlockingTest {
                 // given
@@ -455,7 +433,7 @@ class LaborServiceTest {
             }
 
             @ParameterizedTest
-            @CsvSource("$ID_UPDATE, $NAME, $PLZ, $VERSION_ALT")
+            @CsvSource("$ID_UPDATE, $NAME, $VERSION_ALT")
             @Order(6300)
             @Disabled("Mocking des Cache in Spring Data MongoDB...")
             fun `Labor aktualisieren mit alter Versionsnummer`(args: ArgumentsAccessor) = runBlockingTest {
@@ -463,9 +441,7 @@ class LaborServiceTest {
                 val idStr = args.get<String>(0)
                 val id = UUID.fromString(idStr)
                 val name = args.get<String>(1)
-                val email = args.get<String>(2)
-                val plz = args.get<String>(3)
-                val version = args.get<String>(4)
+                val version = args.get<String>(2)
 
                 every { mongo.query<Labor>() } returns findOp
                 every { findOp.matching(Labor::id isEqualTo id) } returns findOp
@@ -598,7 +574,7 @@ class LaborServiceTest {
         const val USERNAME_ADMIN = "admin"
         const val PASSWORD = "p"
         const val VERSION = "0"
-        const val VERSION_INVALID = "!?"
+        const val VERSION_INVALID = "?!"
         const val VERSION_ALT = "-1"
     }
 }
