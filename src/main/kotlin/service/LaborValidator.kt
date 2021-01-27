@@ -37,13 +37,13 @@ class LaborValidator(messageSource: MessageSource, adresseValidator: AdresseVali
         .konstraint(Labor::fax) {
             notEmpty().message(
                 ViolationMessage.of(
-                    "labor.labor.notEmpty",
+                    "labor.fax.notEmpty",
                     "Fax is required.",
                 )
             )
                 .lessThanOrEqual(MAX_NUMBER).message(
                     ViolationMessage.of(
-                        "labor.labor.pattern",
+                        "labor.fax.pattern",
                         "Max 15 digits are allowed.",
                     )
                 )

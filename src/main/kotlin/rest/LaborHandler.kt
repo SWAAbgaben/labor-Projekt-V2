@@ -176,11 +176,12 @@ class LaborHandler(private val service: LaborService, private val modelAssembler
             return badRequest().buildAndAwait()
         }
 
-        val kundeViolations = violations.associate { violation ->
+        val laborViolations = violations.associate { violation ->
             violation.messageKey() to violation.message()
         }
-        logger.debug("handleConstraintViolations(): {}", violations)
-        return badRequest().bodyValueAndAwait(violations)
+        logger.debug("handleConstraintViolations(): {}", laborViolations)
+
+        return badRequest().bodyValueAndAwait(laborViolations)
     }
 
     @Suppress("LongMethod", "DuplicatedCode")

@@ -362,7 +362,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
 
             @ParameterizedTest
             @CsvSource(
-                "$NEUER_NAME, $NEUE_TELEFONNUMMER, $NEUE_FAX, $NEUE_STRASSE, $NEUE_HAUSNUMMER, $NEUE_PLZ, " +
+                "$NEUER_NAME, $NEUE_TELEFONNUMMER, $NEUE_FAX_INVALID, $NEUE_STRASSE, $NEUE_HAUSNUMMER, $NEUE_PLZ_INVALID, " +
                     "$NEUER_ORT, $NEUER_USERNAME",
             )
             @Order(5100)
@@ -381,6 +381,12 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                     zustaendigesGesundheitsamt = Gesundheitsamt("test", "test", adresse),
                     username = args.get<String>(7),
                 )
+                neuesLabor.user = CustomUser(
+                    id = null,
+                    username = args.get<String>(7),
+                    password = "p",
+                    authorities = emptyList(),
+                )
                 val violationKeys = listOf(
                     "labor.fax.pattern",
                     "adresse.plz.pattern",
@@ -390,7 +396,7 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
                 val response = client.post()
                     .contentType(APPLICATION_JSON)
                     .bodyValue(neuesLabor)
-                    .awaitExchange { response -> response.awaitEntity<Map<String, String>>() }
+                    .awaitExchange { response -> response.awaitEntity<Map<String,String>>() }
 
                 // then
                 assertSoftly(response) {
@@ -584,7 +590,8 @@ class LaborRestTest(@LocalServerPort private val port: Int, ctx: ReactiveWebAppl
         const val NAME_PARAM = "name"
 
         const val USERNAME_ADMIN = "admin"
-        const val USERNAME_LABOR = "alpha123"
+        const val USERNAME_LABOR = "alpha1 " +
+            ""
         const val PASSWORD = "p"
         const val PASSWORD_FALSCH = "Falsches Passwort!"
 

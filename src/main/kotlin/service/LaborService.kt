@@ -189,6 +189,7 @@ class LaborService(
         createResult as CreateResult.Success
         if (mailer.send(createResult.labor) is SendResult.Success) {
             logger.debug("create: Email gesendet")
+            //TODO Schicke Anfrage an Gesundheitsamt API
         } else {
             // TODO Exception analysieren und evtl. erneutes Senden der Email
             logger.warn("create: Email nicht gesendet: Ist der Mailserver erreichbar?")

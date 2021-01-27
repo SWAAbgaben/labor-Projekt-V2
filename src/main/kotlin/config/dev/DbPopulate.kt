@@ -84,8 +84,6 @@ interface DbPopulate {
         mongo: ReactiveMongoOperations,
         logger: Logger,
     ): MongoCollection<Document> {
-        val maxKategorie = 9
-        val plzLength = 5
 
         // https://docs.mongodb.com/manual/core/schema-validation
         // https://docs.mongodb.com/manual/release-notes/3.6/#json-schema

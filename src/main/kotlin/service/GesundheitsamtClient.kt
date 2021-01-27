@@ -69,8 +69,8 @@ class GesundheitsamtClient(
 
     private companion object {
         // https://github.com/istio/istio/blob/master/samples/bookinfo/src/reviews/reviews-application/src/main/java/application/rest/LibertyRestEndpoint.java#L43
-        val GesundheitsamtService = System.getenv("KUNDE_HOSTNAME") ?: "Gesundheitsamt"
-        val GesundheitsamtPort = System.getenv("KUNDE_SERVICE_PORT") ?: "8080"
+        val GesundheitsamtService = System.getenv("GESUNDHEITSAMT_HOSTNAME") ?: "Gesundheitsamt"
+        val GesundheitsamtPort = System.getenv("GESUNDHEITSAMT_SERVICE_PORT") ?: "8080"
         val baseUrl = "http://$GesundheitsamtService:$GesundheitsamtPort"
 
         const val username = "admin"
